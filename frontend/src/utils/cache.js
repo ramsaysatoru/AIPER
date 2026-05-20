@@ -1,0 +1,68 @@
+import axios from 'axios';
+
+/**
+ * Fetches data from a URL using a Stale-While-Revalidate strategy.
+ * - If cached data exists in sessionStorage, it immediately calls `setter` with the cached data (0ms render).
+ * - It then fetches fresh data from the server in the background and calls `setter` again with the fresh data.
+ * - The fresh data is written back to the cache for the next load.
+ *
+ * @param {string} url - The API endpoint to fetch from.
+ * @param {string} cacheKey - The sessionStorage key to use for caching.
+ * @param {Function} setter - A React setState function to update the UI.
+ * @param {Object} headers - Optional Axios request headers (e.g., Authorization).
+ * @param {Object} options - Options object. Pass { cache: false } to bypass caching.
+ */
+export async function fetchWithCache(url, cacheKey, setter, headers = {}, { cache = true } = {}) {
+  // Step 1: Instantly render from cache if available
+  if (cache) {
+    try {
+      const raw = sessionStorage.getItem(cacheKey);
+      if (raw) {
+        setter(JSON.parse(raw));
+      }
+    } catch (e) {
+      // Silently fail if sessionStorage is unavailable or data is corrupt
+      sessionStorage.removeItem(cacheKey);
+    }
+  }
+
+  // Step 2: Fetch fresh data from the server in the background
+  const res = await axios.get(url, { headers });
+
+  // Step 3: Update the UI with fresh data
+  setter(res.data);
+
+  // Step 4: Write fresh data back to the cache
+  if (cache) {
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify(res.data));
+    } catch (e) {
+      // sessionStorage can throw if storage quota is exceeded; fail silently
+    }
+  }
+
+  return res.data;
+}
+
+/**
+ * Removes a specific key from the sessionStorage cache.
+ * Call this after any write operation (create, update, delete) to ensure
+ * the next fetch retrieves fresh data rather than stale cached data.
+ *
+ * @param {...string} keys - One or more cache keys to invalidate.
+ */
+export function invalidateCache(...keys) {
+  keys.forEach(key => sessionStorage.removeItem(key));
+}
+
+// --- Cache Key Constants ---
+// Centralised here so they're never mistyped across multiple files.
+export const CACHE_KEYS = {
+  JOBS: 'aiper_jobs',
+  USERS: 'aiper_users',
+  INSTANCES: 'aiper_instances',
+  STATS: 'aiper_stats',
+  MY_TASKS: 'aiper_my_tasks',
+  TRANSFERS_IN: 'aiper_transfers_in',
+  TRANSFERS_OUT: 'aiper_transfers_out',
+};
