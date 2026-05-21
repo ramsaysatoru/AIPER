@@ -521,8 +521,12 @@ tr:hover {
   .timeline-card {
     min-width: unset !important;
     width: 100% !important;
-    padding: 1.15rem !important;
+    padding: 0.85rem !important; /* Minimized tree UI size */
     overflow: hidden;
+  }
+
+  .timeline-card h4 {
+    font-size: 0.9rem !important;
   }
 
   /* Timeline header: stack title + reopen button vertically */
@@ -539,6 +543,17 @@ tr:hover {
   .timeline-meta > div {
     font-size: 0.68rem !important;
     word-break: break-word;
+  }
+
+  /* Force vertical stacking of the entire pipeline sequence on mobile */
+  .pipeline-container {
+    flex-direction: column !important;
+  }
+
+  /* Prevent Submission Telemetry text from clipping */
+  .telemetry-text {
+    word-break: break-word;
+    white-space: normal;
   }
 
   /* ── Buttons: scale down on mobile ── */

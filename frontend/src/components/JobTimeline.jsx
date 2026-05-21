@@ -155,12 +155,12 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
             <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: '#F9FAFB', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
               <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.6rem', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.4rem' }}>Submission Telemetry</div>
               {instance.testingPeriod?.startDate && (
-                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
+                <div className="telemetry-text" style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
                   <strong>Testing Period:</strong> {new Date(instance.testingPeriod.startDate).toLocaleDateString('en-IN')} – {new Date(instance.testingPeriod.endDate).toLocaleDateString('en-IN')}
                 </div>
               )}
               {instance.results?.some(r => r.testMethod) && (
-                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                <div className="telemetry-text" style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
                   <strong>Methods Used:</strong> {Array.from(new Set(instance.results.map(r => r.testMethod).filter(Boolean))).join(', ') || 'Standard Methods'}
                 </div>
               )}
@@ -227,7 +227,7 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
         </div>
 
         {/* Pipeline tracks */}
-        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'stretch' }}>
+        <div className="pipeline-container" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'stretch' }}>
           {cycleJob.sampleFlow?.firstDepartment === 'chemical' ? (
             <>
               {(user?.role !== 'HEAD' || user?.department?.toLowerCase() === 'chemical' || user?.department?.toLowerCase() === 'chemical') && (
@@ -245,6 +245,16 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
                         ? `Received by ${cycleJob.sampleTransfers[0].receivedBy?.name?.split(' ')[0] || 'Dept'}` 
                         : `In Transit`}
                     </div>
+                    {cycleJob.sampleTransfers[0].sentAt && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', textAlign: 'center' }}>
+                        Sent: {new Date(cycleJob.sampleTransfers[0].sentAt).toLocaleString('en-IN', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true })}
+                      </div>
+                    )}
+                    {cycleJob.sampleTransfers[0].receivedAt && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                        Received: {new Date(cycleJob.sampleTransfers[0].receivedAt).toLocaleString('en-IN', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -269,6 +279,16 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
                         ? `Received by ${cycleJob.sampleTransfers[0].receivedBy?.name?.split(' ')[0] || 'Dept'}` 
                         : `In Transit`}
                     </div>
+                    {cycleJob.sampleTransfers[0].sentAt && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', textAlign: 'center' }}>
+                        Sent: {new Date(cycleJob.sampleTransfers[0].sentAt).toLocaleString('en-IN', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true })}
+                      </div>
+                    )}
+                    {cycleJob.sampleTransfers[0].receivedAt && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                        Received: {new Date(cycleJob.sampleTransfers[0].receivedAt).toLocaleString('en-IN', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

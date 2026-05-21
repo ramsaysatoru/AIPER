@@ -124,7 +124,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex-center mesh-gradient" style={{ minHeight: '100vh', width: '100vw', overflow: 'auto', padding: '1rem 0', boxSizing: 'border-box' }}>
+    <div className="flex-center mesh-gradient" style={{ height: '100dvh', width: '100vw', overflow: 'hidden', padding: '0', boxSizing: 'border-box' }}>
       {/* Decorative Blur Orbs */}
       <div style={{ position: 'absolute', top: '15%', left: '10%', width: '350px', height: '350px', background: 'radial-gradient(circle, rgba(64,158,255,0.1) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 1 }}></div>
       <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: '450px', height: '450px', background: 'radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%)', filter: 'blur(70px)', zIndex: 1 }}></div>
