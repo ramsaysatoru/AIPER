@@ -520,13 +520,22 @@ tr:hover {
   /* ── Timeline cards: prevent data clipping ── */
   .timeline-card {
     min-width: unset !important;
+    flex: 1 1 100% !important; /* override inline flex: 1 1 300px */
     width: 100% !important;
-    padding: 0.85rem !important; /* Minimized tree UI size */
-    overflow: hidden;
+    max-width: 100% !important;
+    padding: 0.75rem !important;
+    box-sizing: border-box !important;
+    overflow-x: auto;
   }
 
   .timeline-card h4 {
-    font-size: 0.9rem !important;
+    font-size: 0.88rem !important;
+  }
+
+  .timeline-card .timeline-meta > div {
+    font-size: 0.65rem !important;
+    padding: 0.15rem 0.35rem !important;
+    word-break: break-word;
   }
 
   /* Timeline header: stack title + reopen button vertically */
@@ -537,17 +546,20 @@ tr:hover {
 
   .timeline-meta {
     flex-wrap: wrap !important;
-    gap: 0.35rem !important;
-  }
-
-  .timeline-meta > div {
-    font-size: 0.68rem !important;
-    word-break: break-word;
+    gap: 0.3rem !important;
   }
 
   /* Force vertical stacking of the entire pipeline sequence on mobile */
   .pipeline-container {
     flex-direction: column !important;
+    gap: 1rem !important;
+    width: 100% !important;
+  }
+
+  .pipeline-container > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   /* Prevent Submission Telemetry text from clipping */
