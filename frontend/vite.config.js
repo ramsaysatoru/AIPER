@@ -7,7 +7,7 @@ export default defineConfig({
   preview: {
     // Railway sets the PORT env var dynamically; bind to all interfaces
     host: '0.0.0.0',
-    port: parseInt(process.env.PORT) || 4173,
+    port: parseInt(process.env.PORT) || 5000,
     strictPort: true,
   },
 })
