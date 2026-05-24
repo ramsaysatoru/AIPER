@@ -65,7 +65,13 @@ export default function AssistantDashboard() {
     setTestingPeriod(p => {
       const current = p[field] || '';
       const [, oldTime] = current.split('T');
-      return { ...p, [field]: `${newDateStr}T${oldTime || '00:00'}` };
+      let newTime = oldTime;
+      if (!newTime) {
+         const d = new Date();
+         const pad = (n) => String(n).padStart(2, '0');
+         newTime = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+      return { ...p, [field]: newDateStr ? `${newDateStr}T${newTime}` : '' };
     });
   };
 
@@ -73,7 +79,13 @@ export default function AssistantDashboard() {
     setTestingPeriod(p => {
       const current = p[field] || '';
       const [oldDate] = current.split('T');
-      return { ...p, [field]: `${oldDate || '2000-01-01'}T${newTimeStr}` };
+      let newDate = oldDate;
+      if (!newDate) {
+         const d = new Date();
+         const pad = (n) => String(n).padStart(2, '0');
+         newDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      }
+      return { ...p, [field]: newTimeStr ? `${newDate}T${newTimeStr}` : '' };
     });
   };
 
@@ -86,10 +98,10 @@ export default function AssistantDashboard() {
       isSaved: r.isSaved || false,
       testMethod: r.testMethod || ''
     })));
-    // Restore testingPeriod if already set, else auto-fill with current local time
+    // Restore testingPeriod if already set, else empty strings
     setTestingPeriod({
-      startDate: task.testingPeriod?.startDate ? formatDateTimeLocal(task.testingPeriod.startDate) : formatDateTimeLocal(new Date()),
-      endDate: task.testingPeriod?.endDate ? formatDateTimeLocal(task.testingPeriod.endDate) : formatDateTimeLocal(new Date())
+      startDate: task.testingPeriod?.startDate ? formatDateTimeLocal(task.testingPeriod.startDate) : '',
+      endDate: task.testingPeriod?.endDate ? formatDateTimeLocal(task.testingPeriod.endDate) : ''
     });
   };
 
@@ -270,6 +282,10 @@ export default function AssistantDashboard() {
           endDate: testingPeriod.endDate || null
         }
       });
+      
+      // Immediately remove from UI for snappy experience
+      setTasks(prev => prev.filter(t => t._id !== activeTask._id));
+      
       setSuccess(`Task ${formatJobCode(activeTask.testCode)} submitted for review!`);
       invalidateCache(CACHE_KEYS.MY_TASKS);
       closeTask();

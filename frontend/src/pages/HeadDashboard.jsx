@@ -479,6 +479,9 @@ function Dispatcher() {
         assignments: assignmentList
       });
       
+      // Immediately remove from UI for snappy experience
+      setJobs(prev => prev.filter(j => j._id !== job._id));
+      
       setSuccess(`Job ${formatJobCode(job.jobCode)} dispatched successfully!`);
       setExpandedJobId(null);
       setTimeout(() => setSuccess(''), 4000);
@@ -540,6 +543,10 @@ function Dispatcher() {
         await axios.put(`${API_URL}/api/sample-transfers/${id}/receive`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
+        
+        // Immediately remove from UI for snappy experience
+        setIncomingTransfers(prev => prev.filter(t => t._id !== id));
+        
         setSuccess('Sample receipt confirmed! The job is now available in your dispatcher.');
         invalidateCache(CACHE_KEYS.JOBS);
       }
