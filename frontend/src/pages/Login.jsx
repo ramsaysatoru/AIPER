@@ -36,7 +36,11 @@ export default function Login() {
         redirectRole(u.role);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid credentials');
+      if (err.response) {
+        setError(err.response.data?.message || 'Invalid credentials');
+      } else {
+        setError('Network Error: Cannot connect to server');
+      }
     }
   };
 
@@ -135,7 +139,7 @@ export default function Login() {
             src={logo}
             alt="Acropolis Logo"
             className="login-logo"
-            style={{ width: '220px', marginBottom: '0.5rem' }}
+            style={{ width: '260px', marginBottom: '0.5rem' }}
           />
         </div>
 
