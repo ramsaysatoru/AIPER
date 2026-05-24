@@ -53,6 +53,14 @@ export default function AssistantDashboard() {
     };
   }, [socket]);
 
+  const formatDateTimeLocal = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   const openTask = (task) => {
     setActiveTask(task);
     // Initialize with existing saved values, or empty strings if not yet started
@@ -62,10 +70,10 @@ export default function AssistantDashboard() {
       isSaved: r.isSaved || false,
       testMethod: r.testMethod || ''
     })));
-    // Restore testingPeriod if already set
+    // Restore testingPeriod if already set, else auto-fill with current local time
     setTestingPeriod({
-      startDate: task.testingPeriod?.startDate ? task.testingPeriod.startDate.slice(0, 10) : '',
-      endDate: task.testingPeriod?.endDate ? task.testingPeriod.endDate.slice(0, 10) : ''
+      startDate: task.testingPeriod?.startDate ? formatDateTimeLocal(task.testingPeriod.startDate) : formatDateTimeLocal(new Date()),
+      endDate: task.testingPeriod?.endDate ? formatDateTimeLocal(task.testingPeriod.endDate) : formatDateTimeLocal(new Date())
     });
   };
 
@@ -345,13 +353,13 @@ export default function AssistantDashboard() {
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 500, marginBottom: '0.4rem', color: 'var(--color-text-muted)' }}>
                     Start Date <span style={{ color: 'var(--color-danger)' }}>*</span>
                   </label>
-                  <input type="date" value={testingPeriod.startDate} onChange={e => setTestingPeriod(p => ({ ...p, startDate: e.target.value }))} required style={inputStyle} />
+                  <input type="datetime-local" value={testingPeriod.startDate} onChange={e => setTestingPeriod(p => ({ ...p, startDate: e.target.value }))} required style={inputStyle} />
                 </div>
                 <div style={{ flex: 1, minWidth: '200px' }}>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 500, marginBottom: '0.4rem', color: 'var(--color-text-muted)' }}>
                     End Date <span style={{ color: 'var(--color-danger)' }}>*</span>
                   </label>
-                  <input type="date" value={testingPeriod.endDate} min={testingPeriod.startDate} onChange={e => setTestingPeriod(p => ({ ...p, endDate: e.target.value }))} required style={inputStyle} />
+                  <input type="datetime-local" value={testingPeriod.endDate} min={testingPeriod.startDate} onChange={e => setTestingPeriod(p => ({ ...p, endDate: e.target.value }))} required style={inputStyle} />
                 </div>
               </div>
             </div>

@@ -158,54 +158,7 @@ function Dashboard() {
         />
       </div>
 
-      <div className="card" style={{ marginBottom: '2.5rem', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', overflow: 'hidden' }}>
-        <div 
-          onClick={() => setIsUlrSettingsOpen(!isUlrSettingsOpen)}
-          style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-        >
-          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3a8a', fontSize: '1.1rem' }}>
-            <Activity size={18} /> NABL ULR Settings
-          </h3>
-          <div style={{ color: '#1e3a8a' }}>
-            {isUlrSettingsOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-        </div>
-        
-        {isUlrSettingsOpen && (
-          <div style={{ padding: '0 1.5rem 1.5rem 1.5rem', borderTop: '1px solid rgba(191, 219, 254, 0.5)' }}>
-            <div className="grid-2" style={{ gap: '2rem', alignItems: 'flex-start', paddingTop: '1rem' }}>
-              <div>
-                <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Next ULR Preview:</div>
-                <div style={{ fontFamily: 'monospace', fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'inline-block', border: '1px solid #93c5fd' }}>
-                  {currentUlrPreview || 'Loading...'}
-                </div>
-                <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the ULR that will be assigned to the next NABL job.</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Adjust ULR Offset:</div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
-                    type="number" 
-                    placeholder="New Offset (e.g. 5)" 
-                    value={ulrOffset} 
-                    onChange={e => setUlrOffset(e.target.value)}
-                    style={{ flex: 1, border: '1px solid #93c5fd', backgroundColor: 'white' }}
-                  />
-                  <button 
-                    onClick={handleUpdateOffset} 
-                    disabled={isUpdatingOffset || !ulrOffset}
-                    className="btn btn-primary"
-                    style={{ backgroundColor: '#2563eb' }}
-                  >
-                    {isUpdatingOffset ? 'Updating...' : 'Update Offset'}
-                  </button>
-                </div>
-                <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Use this to skip forward in the ULR sequence if numbers were generated outside the system.</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+
 
       <div className="card" style={{ padding: 0 }}>
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -273,35 +226,35 @@ function UserSection({ title, users, isLoading, onEdit, onDelete, userToDelete, 
           </div>
         ) : (
           <div className="table-scroll">
-          <table>
-            <thead style={{ backgroundColor: 'var(--color-surface-hover)' }}>
-              <tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Action</th></tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u._id}>
-                  <td style={{ fontWeight: 500 }}>{u.name}</td>
-                  <td>{u.email}</td>
-                  <td><span className={`badge ${u.role === 'HEAD' ? 'badge-warning' : 'badge-success'}`}>{u.role}</span></td>
-                  <td>{u.department || 'N/A'}</td>
-                  <td>
-                    {userToDelete && userToDelete._id === u._id ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--color-danger)' }}>Sure?</span>
-                        <button onClick={async () => { await onConfirmDelete(u._id); setUserToDelete(null); }} className="btn-danger" style={{ padding: '0.2rem 0.6rem', fontSize: '0.8rem', borderRadius: '4px', border: 'none', cursor: 'pointer' }}>Yes</button>
-                        <button onClick={() => setUserToDelete(null)} style={{ padding: '0.2rem 0.6rem', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)', cursor: 'pointer' }}>No</button>
-                      </div>
-                    ) : (
-                      <>
-                        <button onClick={() => onEdit(u)} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', marginRight: '1rem' }}><Edit size={18} /></button>
-                        <button onClick={() => setUserToDelete(u)} style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}><Trash2 size={18} /></button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <table>
+              <thead style={{ backgroundColor: 'var(--color-surface-hover)' }}>
+                <tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u._id}>
+                    <td style={{ fontWeight: 500 }}>{u.name}</td>
+                    <td>{u.email}</td>
+                    <td><span className={`badge ${u.role === 'HEAD' ? 'badge-warning' : 'badge-success'}`}>{u.role}</span></td>
+                    <td>{u.department || 'N/A'}</td>
+                    <td>
+                      {userToDelete && userToDelete._id === u._id ? (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-danger)' }}>Sure?</span>
+                          <button onClick={async () => { await onConfirmDelete(u._id); setUserToDelete(null); }} className="btn-danger" style={{ padding: '0.2rem 0.6rem', fontSize: '0.8rem', borderRadius: '4px', border: 'none', cursor: 'pointer' }}>Yes</button>
+                          <button onClick={() => setUserToDelete(null)} style={{ padding: '0.2rem 0.6rem', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)', cursor: 'pointer' }}>No</button>
+                        </div>
+                      ) : (
+                        <>
+                          <button onClick={() => onEdit(u)} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', marginRight: '1rem' }}><Edit size={18} /></button>
+                          <button onClick={() => setUserToDelete(u)} style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -526,7 +479,7 @@ const CHEMICAL_UNITS = [
 const ParameterPicker = ({
   params, setParams, searchTerm, setSearchTerm, searchResults, setSearchResults,
   showAddParam, setShowAddParam, newParam, setNewParam, handleAddNewParam,
-  editingJobId, label
+  editingJobId, label, isSearching
 }) => {
   const handleAddExistingParam = (param) => {
     if (!params.find(p => p._id === param._id)) {
@@ -559,7 +512,7 @@ const ParameterPicker = ({
   return (
     <div style={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-surface-hover)' }}>
       <label style={{ display: 'block', fontWeight: 600, fontSize: '1rem', color: 'var(--color-primary)' }}>{label} <span style={{ color: 'var(--color-danger)' }}>*</span></label>
-      
+
       {!editingJobId ? (
         <div style={{ position: 'relative' }}>
           <input
@@ -570,30 +523,36 @@ const ParameterPicker = ({
           />
           {searchTerm.trim() && (
             <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', zIndex: 20, boxShadow: 'var(--shadow-md)', maxHeight: '200px', overflowY: 'auto' }}>
-              {searchResults.map(p => (
-                <div key={p._id} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div onClick={() => handleAddExistingParam(p)} style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{p.name}</span>
-                    <span style={{ fontSize: '0.8rem', color: p.type === 'Micro' ? 'var(--color-success)' : 'var(--color-info)' }}>{p.type}</span>
+              {isSearching ? (
+                <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)' }}>Loading...</div>
+              ) : (
+                <>
+                  {searchResults.map(p => (
+                    <div key={p._id} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div onClick={() => handleAddExistingParam(p)} style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>{p.name}</span>
+                        <span style={{ fontSize: '0.8rem', color: p.type === 'Micro' ? 'var(--color-success)' : 'var(--color-info)' }}>{p.type}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteParam(e, p)}
+                        title={`Delete "${p.name}" from library`}
+                        style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.2rem 0.4rem', marginLeft: '0.5rem', display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={e => e.currentTarget.style.opacity = 0.6}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {searchResults.length === 0 && (
+                    <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)' }}>No parameters found.</div>
+                  )}
+                  <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-hover)', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 500 }} onClick={() => { setShowAddParam(true); setNewParam({ name: searchTerm, type: 'Micro', unit: '' }); setSearchTerm(''); }}>
+                    + Add New Parameter "{searchTerm}"
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDeleteParam(e, p)}
-                    title={`Delete "${p.name}" from library`}
-                    style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '0.2rem 0.4rem', marginLeft: '0.5rem', display: 'flex', alignItems: 'center', opacity: 0.6 }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                    onMouseLeave={e => e.currentTarget.style.opacity = 0.6}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-              {searchResults.length === 0 && (
-                <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)' }}>No parameters found.</div>
+                </>
               )}
-              <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-hover)', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 500 }} onClick={() => { setShowAddParam(true); setNewParam({ name: searchTerm, type: 'Micro', unit: '' }); setSearchTerm(''); }}>
-                + Add New Parameter "{searchTerm}"
-              </div>
             </div>
           )}
         </div>
@@ -665,20 +624,33 @@ const ParameterPicker = ({
                   <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.15rem 0.4rem', borderRadius: '4px', backgroundColor: p.type === 'Micro' ? '#166534' : '#075985', color: 'white', textTransform: 'uppercase' }}>{p.type}</span>
                   {!editingJobId ? (
                     <select
-                      value={isCustomUnit ? '__custom__' : p.unit}
-                      onChange={e => {
+                      value={p.unit || ''}
+                      onChange={async (e) => {
                         if (e.target.value === '__custom__') {
                           const custom = prompt('Enter custom unit:');
-                          if (custom && custom.trim()) updateParamUnit(index, custom.trim());
+                          if (custom && custom.trim()) {
+                            const trimmed = custom.trim();
+                            updateParamUnit(index, trimmed);
+                            try {
+                              await axios.put(`${API_URL}/api/parameters/${p._id}`, { unit: trimmed });
+                            } catch (err) {
+                              console.error('Failed to save custom unit', err);
+                            }
+                          }
                         } else {
                           updateParamUnit(index, e.target.value);
+                          try {
+                            await axios.put(`${API_URL}/api/parameters/${p._id}`, { unit: e.target.value });
+                          } catch (err) {
+                            console.error('Failed to save unit', err);
+                          }
                         }
                       }}
                       style={{ width: 'auto', padding: '0.2rem 0.4rem', fontSize: '0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', backgroundColor: 'white' }}
                     >
                       <option value="" disabled>Select unit...</option>
                       {unitOptions.map(u => <option key={u} value={u}>{u}</option>)}
-                      <option value="__custom__">Custom unit...</option>
+                      <option value="__custom__">✏️ Custom unit...</option>
                       {isCustomUnit && <option value={p.unit}>{p.unit} (custom)</option>}
                     </select>
                   ) : (
@@ -728,7 +700,7 @@ function Jobs() {
   const [selectedParams, setSelectedParams] = useState([]);
   const [showAddParam, setShowAddParam] = useState(false);
   const [newParam, setNewParam] = useState({ name: '', type: 'Micro', unit: '' });
-  
+
   // Hybrid mode: separate parameter lists for NABL and Non-NABL sub-jobs
   const [nablParams, setNablParams] = useState([]);
   const [nonNablParams, setNonNablParams] = useState([]);
@@ -736,6 +708,9 @@ function Jobs() {
   const [nonNablSearchTerm, setNonNablSearchTerm] = useState('');
   const [nablSearchResults, setNablSearchResults] = useState([]);
   const [nonNablSearchResults, setNonNablSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isNablSearching, setIsNablSearching] = useState(false);
+  const [isNonNablSearching, setIsNonNablSearching] = useState(false);
   const [ulrPreview, setUlrPreview] = useState('');
 
   const [sampleFlowType, setSampleFlowType] = useState('PARALLEL');
@@ -849,42 +824,48 @@ function Jobs() {
 
   // Parameter search debounce
   useEffect(() => {
+    if (searchTerm.trim()) setIsSearching(true);
     const delayDebounceFn = setTimeout(async () => {
       if (searchTerm.trim()) {
         try {
           const res = await axios.get(`${API_URL}/api/parameters?search=${searchTerm}`);
           setSearchResults(res.data);
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error(err); } finally { setIsSearching(false); }
       } else {
         setSearchResults([]);
+        setIsSearching(false);
       }
     }, 300);
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
   useEffect(() => {
+    if (nablSearchTerm.trim()) setIsNablSearching(true);
     const delayDebounceFn = setTimeout(async () => {
       if (nablSearchTerm.trim()) {
         try {
           const res = await axios.get(`${API_URL}/api/parameters?search=${nablSearchTerm}`);
           setNablSearchResults(res.data);
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error(err); } finally { setIsNablSearching(false); }
       } else {
         setNablSearchResults([]);
+        setIsNablSearching(false);
       }
     }, 300);
     return () => clearTimeout(delayDebounceFn);
   }, [nablSearchTerm]);
 
   useEffect(() => {
+    if (nonNablSearchTerm.trim()) setIsNonNablSearching(true);
     const delayDebounceFn = setTimeout(async () => {
       if (nonNablSearchTerm.trim()) {
         try {
           const res = await axios.get(`${API_URL}/api/parameters?search=${nonNablSearchTerm}`);
           setNonNablSearchResults(res.data);
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error(err); } finally { setIsNonNablSearching(false); }
       } else {
         setNonNablSearchResults([]);
+        setIsNonNablSearching(false);
       }
     }, 300);
     return () => clearTimeout(delayDebounceFn);
@@ -1120,25 +1101,72 @@ function Jobs() {
           <Activity size={28} style={{ color: 'var(--color-primary)' }} />
           {editingJobId ? 'Edit Job' : (reopenParentId ? 'Retest / Reopen Job' : 'Job Distributor')}
         </h1>
-        <button className="btn btn-primary" onClick={() => {
-          if (!showForm) {
-            // Pre-select first heads when opening
-            const micro = heads.filter(h => h.department === 'Micro');
-            if (micro.length > 0) setAssignedMicroHead(micro[0]._id);
-            const chemical = heads.filter(h => h.department === 'Chemical');
-            if (chemical.length > 0) setAssignedChemicalHead(chemical[0]._id);
-          }
-          setShowForm(!showForm);
-          if (showForm) {
-            setReopenParentId(null);
-            setEditingJobId(null);
-            setAssignedMicroHead('');
-            setAssignedChemicalHead('');
-          }
-        }}>
-          {showForm ? 'Cancel Edit/Close Form' : '+ New Client Sample Job'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn" style={{ border: '1px solid var(--color-border)', backgroundColor: isUlrSettingsOpen ? 'var(--color-surface-hover)' : 'var(--color-surface)', color: 'var(--color-text-main)' }} onClick={() => {
+            setIsUlrSettingsOpen(!isUlrSettingsOpen);
+            if (!isUlrSettingsOpen) setShowForm(false);
+          }}>
+            ULR Offset
+          </button>
+          <button className="btn btn-primary" onClick={() => {
+            if (!showForm) {
+              // Pre-select first heads when opening
+              const micro = heads.filter(h => h.department === 'Micro');
+              if (micro.length > 0) setAssignedMicroHead(micro[0]._id);
+              const chemical = heads.filter(h => h.department === 'Chemical');
+              if (chemical.length > 0) setAssignedChemicalHead(chemical[0]._id);
+            }
+            setShowForm(!showForm);
+            if (!showForm) setIsUlrSettingsOpen(false);
+            if (showForm) {
+              setReopenParentId(null);
+              setEditingJobId(null);
+              setAssignedMicroHead('');
+              setAssignedChemicalHead('');
+            }
+          }}>
+            {showForm ? 'Cancel Edit/Close Form' : '+ New Client Sample Job'}
+          </button>
+        </div>
       </div>
+
+      {isUlrSettingsOpen && (
+        <div className="card" style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+          <h3 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3a8a', fontSize: '1.1rem' }}>
+            <Activity size={18} /> NABL ULR Settings
+          </h3>
+          <div className="grid-2" style={{ gap: '2rem', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Next ULR Preview:</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'inline-block', border: '1px solid #93c5fd' }}>
+                {currentUlrPreview || 'Loading...'}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the ULR that will be assigned to the next NABL job.</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Adjust ULR Offset:</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="number"
+                  placeholder="New Offset (e.g. 5)"
+                  value={ulrOffset}
+                  onChange={e => setUlrOffset(e.target.value)}
+                  style={{ flex: 1, border: '1px solid #93c5fd', backgroundColor: 'white' }}
+                />
+                <button
+                  onClick={handleUpdateOffset}
+                  disabled={isUpdatingOffset || !ulrOffset}
+                  className="btn btn-primary"
+                  style={{ backgroundColor: '#2563eb' }}
+                >
+                  {isUpdatingOffset ? 'Updating...' : 'Update Offset'}
+                </button>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Use this to skip forward in the ULR sequence if numbers were generated outside the system.</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="card" style={{ marginBottom: '2rem', overflow: 'visible', border: reopenParentId ? '2px solid var(--color-warning)' : 'none', maxWidth: '100%', boxSizing: 'border-box' }}>
@@ -1236,6 +1264,7 @@ function Jobs() {
                         <Calendar size={18} color="var(--color-text-muted)" />
                         <input
                           type="date"
+                          onClick={(e) => { if (e.target.showPicker) e.target.showPicker(); }}
                           onChange={e => {
                             if (!e.target.value) return;
                             const [y, m, d] = e.target.value.split('-');
@@ -1300,13 +1329,13 @@ function Jobs() {
                             label="NABL Job Parameters" params={nablParams} setParams={setNablParams}
                             searchTerm={nablSearchTerm} setSearchTerm={setNablSearchTerm} searchResults={nablSearchResults} setSearchResults={setNablSearchResults}
                             showAddParam={showAddParam} setShowAddParam={setShowAddParam} newParam={newParam} setNewParam={setNewParam}
-                            editingJobId={editingJobId}
+                            editingJobId={editingJobId} isSearching={isNablSearching}
                           />
                           <ParameterPicker
                             label="Non-NABL Job Parameters" params={nonNablParams} setParams={setNonNablParams}
                             searchTerm={nonNablSearchTerm} setSearchTerm={setNonNablSearchTerm} searchResults={nonNablSearchResults} setSearchResults={setNonNablSearchResults}
                             showAddParam={showAddParam} setShowAddParam={setShowAddParam} newParam={newParam} setNewParam={setNewParam}
-                            editingJobId={editingJobId}
+                            editingJobId={editingJobId} isSearching={isNonNablSearching}
                           />
                         </>
                       ) : (
@@ -1314,7 +1343,7 @@ function Jobs() {
                           label="Test Parameters" params={selectedParams} setParams={setSelectedParams}
                           searchTerm={searchTerm} setSearchTerm={setSearchTerm} searchResults={searchResults} setSearchResults={setSearchResults}
                           showAddParam={showAddParam} setShowAddParam={setShowAddParam} newParam={newParam} setNewParam={setNewParam}
-                          editingJobId={editingJobId}
+                          editingJobId={editingJobId} isSearching={isSearching}
                         />
                       )}
                     </div>

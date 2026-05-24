@@ -99,4 +99,22 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
+// Update a parameter
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const { unit } = req.body;
+    const parameter = await Parameter.findById(req.params.id);
+    if (!parameter) {
+      return res.status(404).json({ message: 'Parameter not found' });
+    }
+    
+    if (unit !== undefined) parameter.unit = unit.trim();
+    
+    await parameter.save();
+    res.json(parameter);
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating parameter', error: err.message });
+  }
+});
+
 module.exports = router;
