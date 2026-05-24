@@ -1129,7 +1129,11 @@ function Jobs() {
             <div>
               <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Next ULR Preview:</div>
               <div style={{ fontFamily: 'monospace', fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'inline-block', border: '1px solid #93c5fd' }}>
+<<<<<<< HEAD
                 {ulrPreview || 'Loading...'}
+=======
+                {currentUlrPreview || 'Loading...'}
+>>>>>>> e1ee976fca10278fc4a5072e32072d6375bca68c
               </div>
               <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the ULR that will be assigned to the next NABL job.</div>
             </div>
