@@ -173,7 +173,7 @@ function Dashboard() {
   );
 }
 
-function StaffTable({ users, isLoading, emptyMessage }) {
+function StaffTable({ users, isLoading, emptyMessage, onDelete }) {
   if (isLoading && users.length === 0) {
     return <Spinner message={emptyMessage.replace('No ', 'Loading ').replace(' found', '...')} />;
   }
@@ -189,7 +189,7 @@ function StaffTable({ users, isLoading, emptyMessage }) {
     <div className="table-scroll">
     <table style={{ margin: 0 }}>
       <thead style={{ backgroundColor: 'var(--color-surface-hover)' }}>
-        <tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th></tr>
+        <tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Actions</th></tr>
       </thead>
       <tbody>
         {users.map(u => (
@@ -202,6 +202,19 @@ function StaffTable({ users, isLoading, emptyMessage }) {
               </span>
             </td>
             <td>{u.department || 'All'}</td>
+            <td>
+               <button 
+                 onClick={() => {
+                   if (window.confirm(`Are you sure you want to delete ${u.name}?`)) {
+                     onDelete(u._id);
+                   }
+                 }} 
+                 style={{ padding: '0.25rem 0.5rem', background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}
+                 title="Delete User"
+               >
+                 <Trash2 size={16} />
+               </button>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -249,7 +262,7 @@ function UsersPage() {
   });
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', password: ''
+    name: '', email: '', phone: '', password: '', role: 'ADMIN_OFFICER'
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -287,14 +300,25 @@ function UsersPage() {
     e.preventDefault();
     setError(''); setSuccess('');
     try {
-      const res = await axios.post(`${API_URL}/api/users`, { ...formData, role: 'ADMIN_OFFICER' });
-      setSuccess(`Admin Officer created successfully. Temporary password is: ${res.data.temporaryPassword}`);
-      setFormData({ name: '', email: '', phone: '', password: '' });
+      const res = await axios.post(`${API_URL}/api/users`, formData);
+      setSuccess(`User created successfully. Temporary password is: ${res.data.temporaryPassword}`);
+      setFormData({ name: '', email: '', phone: '', password: '', role: 'ADMIN_OFFICER' });
       setShowForm(false);
       invalidateCache(CACHE_KEYS.USERS);
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.message || 'Operation failed');
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/api/users/${id}`);
+      setSuccess('User successfully removed');
+      invalidateCache(CACHE_KEYS.USERS);
+      fetchUsers();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete user');
     }
   };
 
@@ -307,7 +331,7 @@ function UsersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1>Staff Directory</h1>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Close Form' : '+ Create Admin Officer'}
+          {showForm ? 'Close Form' : '+ Create User'}
         </button>
       </div>
 
@@ -328,7 +352,7 @@ function UsersPage() {
 
       {showForm && (
         <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Create New Admin Officer</h3>
+          <h3 style={{ marginBottom: '1rem' }}>Create New User</h3>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <div style={{ flex: 1 }}>
@@ -352,8 +376,19 @@ function UsersPage() {
               </div>
             </div>
             
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', fontWeight: 500 }}>Role</label>
+                <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} required style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text-main)', width: '100%', fontSize: '0.95rem' }}>
+                  <option value="ADMIN_OFFICER">Admin Officer</option>
+                  <option value="ADMIN">System Admin</option>
+                </select>
+              </div>
+              <div style={{ flex: 1 }}></div>
+            </div>
+            
             <div>
-              <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Submit & Create Admin Officer</button>
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Submit & Create User</button>
             </div>
           </form>
         </div>
@@ -366,7 +401,7 @@ function UsersPage() {
           isOpen={expanded.management}
           onToggle={() => toggleSection('management')}
         >
-          <StaffTable users={managementUsers} isLoading={usersLoading} emptyMessage="No management staff found" />
+          <StaffTable users={managementUsers} isLoading={usersLoading} emptyMessage="No management staff found" onDelete={handleDeleteUser} />
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -375,7 +410,7 @@ function UsersPage() {
           isOpen={expanded.heads}
           onToggle={() => toggleSection('heads')}
         >
-          <StaffTable users={headUsers} isLoading={usersLoading} emptyMessage="No department heads found" />
+          <StaffTable users={headUsers} isLoading={usersLoading} emptyMessage="No department heads found" onDelete={handleDeleteUser} />
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -384,7 +419,7 @@ function UsersPage() {
           isOpen={expanded.assistants}
           onToggle={() => toggleSection('assistants')}
         >
-          <StaffTable users={assistantUsers} isLoading={usersLoading} emptyMessage="No lab assistants found" />
+          <StaffTable users={assistantUsers} isLoading={usersLoading} emptyMessage="No lab assistants found" onDelete={handleDeleteUser} />
         </CollapsibleSection>
       </div>
     </div>

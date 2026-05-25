@@ -25,8 +25,8 @@ router.post('/', protect, authorize('ADMIN', 'ADMIN_OFFICER', 'HEAD'), async (re
     const { name, email, phone, role, department, branch } = req.body;
 
     // Validation logic for role hierarchy
-    if (req.user.role === 'ADMIN' && role !== 'ADMIN_OFFICER') {
-      return res.status(403).json({ message: 'Admin can only create ADMIN_OFFICER users' });
+    if (req.user.role === 'ADMIN' && !['ADMIN_OFFICER', 'ADMIN'].includes(role)) {
+      return res.status(403).json({ message: 'Admin can only create ADMIN_OFFICER or ADMIN users' });
     }
     if (req.user.role === 'ADMIN_OFFICER' && !['HEAD', 'ASSISTANT'].includes(role)) {
       return res.status(403).json({ message: 'Admin Officer can only create HEAD or ASSISTANT users' });
@@ -101,7 +101,7 @@ router.put('/:id', protect, authorize('ADMIN_OFFICER', 'HEAD'), async (req, res)
 });
 
 // Delete a user
-router.delete('/:id', protect, authorize('ADMIN_OFFICER', 'HEAD'), async (req, res) => {
+router.delete('/:id', protect, authorize('ADMIN', 'ADMIN_OFFICER', 'HEAD'), async (req, res) => {
   try {
     const userToDelete = await User.findById(req.params.id);
     if (!userToDelete) {
@@ -114,6 +114,9 @@ router.delete('/:id', protect, authorize('ADMIN_OFFICER', 'HEAD'), async (req, r
     }
     if (req.user.role === 'ADMIN_OFFICER' && userToDelete.role === 'ADMIN') {
       return res.status(403).json({ message: 'Not authorized to delete Admin users' });
+    }
+    if (String(req.user._id) === String(userToDelete._id)) {
+      return res.status(403).json({ message: 'Cannot delete your own account' });
     }
 
     await User.deleteOne({ _id: req.params.id });
