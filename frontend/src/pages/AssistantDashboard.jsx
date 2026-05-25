@@ -19,7 +19,7 @@ export default function AssistantDashboard() {
 
   const formatJobCode = (code) => {
     if (!code) return '';
-    return code.replace(/-N[12](?=-|$)/g, '-N');
+    return code.replace(/-[12][a-z]?(?:-v\d+)?$/g, '');
   };
 
   const fetchTasks = async () => {
@@ -523,7 +523,7 @@ export default function AssistantDashboard() {
               <div key={task._id} className="card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: isReassigned(task) ? '4px solid var(--color-danger)' : 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   {isReassigned(task) ? <span className="badge" style={{ backgroundColor: 'rgba(231, 76, 60, 0.1)', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><RotateCcw size={12} /> Reassigned</span> : <span className="badge badge-warning" style={{ backgroundColor: 'rgba(241, 196, 15, 0.1)', color: '#d35400' }}>Pending</span>}
-                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{new Date(task.deadline).toLocaleDateString()}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{new Date(task.deadline).toLocaleDateString('en-IN')}</span>
                 </div>
                 <div>
                   <h3 style={{ margin: '0 0 0.3rem 0', color: 'var(--color-primary-dark)' }}>Test {formatJobCode(task.testCode)}</h3>

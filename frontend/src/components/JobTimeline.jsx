@@ -15,7 +15,7 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
 
   const formatJobCode = (code) => {
     if (!code) return '';
-    return code.replace(/-N[12](?=-|$)/g, '-N');
+    return code.replace(/-[12][a-z]?(?:-v\d+)?$/g, '');
   };
 
   const JobCycle = ({ cycleJob, isRetest }) => {
@@ -158,7 +158,7 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
           {/* Submission Details Summary */}
           {instance && (instance.testingPeriod?.startDate || instance.results?.some(r => r.testMethod)) && (
             <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: '#F9FAFB', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
-              <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.6rem', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.4rem' }}>Submission Telemetry</div>
+              <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.6rem', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.4rem' }}>Submission Details</div>
               {instance.testingPeriod?.startDate && (
                 <div className="telemetry-text" style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
                   <strong>Testing Period:</strong> {new Date(instance.testingPeriod.startDate).toLocaleDateString('en-IN')} – {new Date(instance.testingPeriod.endDate).toLocaleDateString('en-IN')}
@@ -182,11 +182,13 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
           <div>
             <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.2rem', color: isRetest ? '#B45309' : 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {isRetest && <RotateCcw size={20} />}
-              Telemetry: Job {formatJobCode(cycleJob.jobCode)}
+              Job {formatJobCode(cycleJob.jobCode)}
             </h3>
-            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-              {isRetest ? `Retest Cycle #${cycleJob.retestNumber}` : 'Real-time lifecycle tracking across analytical departments.'}
-            </p>
+            {isRetest && (
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                Retest Cycle #{cycleJob.retestNumber}
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

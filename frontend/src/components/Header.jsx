@@ -31,7 +31,6 @@ export default function Header({ onToggleSidebar }) {
         </div>
         <div className="header-user-name" style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{user?.name}</span>
-          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>{user?.branch || 'HQ System'}</span>
         </div>
       </div>
 

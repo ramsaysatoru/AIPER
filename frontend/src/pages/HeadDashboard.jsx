@@ -13,7 +13,7 @@ import API_URL from '../utils/api';
 
 const formatJobCode = (code) => {
   if (!code) return '';
-  return code.replace(/-N[12](?=-|$)/g, '-N');
+  return code.replace(/-[12][a-z]?(?:-v\d+)?$/g, '');
 };
 
 function Dashboard() {
@@ -709,7 +709,7 @@ function Dispatcher() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                        {new Date(job.createdAt).toLocaleDateString()}
+                        {new Date(job.createdAt).toLocaleDateString('en-IN')}
                       </div>
                       <div style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
                         <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{deptParams.length}</span>
@@ -1270,21 +1270,7 @@ function Audit() {
         <h1 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <FileText size={28} style={{ color: 'var(--color-primary)' }} /> Department Job Logs
         </h1>
-        <div style={{ 
-          backgroundColor: 'var(--color-surface-hover)', 
-          borderLeft: '4px solid var(--color-primary)', 
-          padding: '1rem 1.5rem', 
-          borderRadius: 'var(--radius-md)',
-          marginBottom: '2rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem'
-        }}>
-          <Clock size={20} style={{ color: 'var(--color-primary)' }} />
-          <div style={{ fontSize: '0.95rem', color: 'var(--color-text-main)', fontWeight: 500 }}>
-            Click on any job row below to view its full lifecycle history, retest cycles, and download final reports.
-          </div>
-        </div>
+
         {auditLoading && jobs.length === 0 ? (
           <div className="card"><Spinner message="Loading logs..." /></div>
         ) : (
@@ -1320,7 +1306,7 @@ function Audit() {
                     <td style={{ fontWeight: 500 }}>{inst.clientName}</td>
                     <td>{inst.blueprintId?.name}</td>
                     <td>{inst.assignedTo?.name}</td>
-                    <td>{new Date(inst.completedAt).toLocaleDateString()}</td>
+                    <td>{new Date(inst.completedAt).toLocaleDateString('en-IN')}</td>
                   </tr>
                 ))
               )}

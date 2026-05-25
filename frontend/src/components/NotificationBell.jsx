@@ -220,7 +220,7 @@ export default function NotificationBell() {
                       </h4>
                       <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.2rem', whiteSpace: 'nowrap' }}>
                         <Clock size={12} />
-                        {new Date(notif.createdAt).toLocaleDateString()}
+                        {new Date(notif.createdAt).toLocaleDateString('en-IN')}
                       </span>
                     </div>
                     <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>

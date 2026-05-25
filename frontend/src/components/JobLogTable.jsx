@@ -47,7 +47,7 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
 
   const formatJobCode = (code) => {
     if (!code) return '';
-    return code.replace(/-N[12](?=-|$)/g, '-N');
+    return code.replace(/-[12][a-z]?(?:-v\d+)?$/g, '');
   };
 
   return (
@@ -104,7 +104,7 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
                   </td>
                   <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{formatJobCode(job.jobCode)}</td>
                   <td style={{ fontWeight: 500 }}>{job.clientName}</td>
-                  <td>{new Date(job.createdAt).toLocaleDateString()}</td>
+                  <td>{new Date(job.createdAt).toLocaleDateString('en-IN')}</td>
                   <td><StatusBadge status={getJobStatus(job)} /></td>
                   {(onDeleteJob || onEditJob) && (
                     <td style={{ textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>

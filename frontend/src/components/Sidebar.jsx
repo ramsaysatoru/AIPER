@@ -86,9 +86,9 @@ export default function Sidebar({ isOpen, onClose }) {
           </NavLink>
         ))}
 
-        {/* Spacer to push bug report to bottom */}
-        <div style={{ flex: 1 }} />
+      </nav>
 
+      <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-primary-light)' }}>
         <NavLink
           to="/report-bug"
           onClick={handleNavClick}
@@ -102,21 +102,11 @@ export default function Sidebar({ isOpen, onClose }) {
             backgroundColor: isActive ? 'var(--color-danger)' : 'transparent',
             textDecoration: 'none',
             transition: 'all 0.2s',
-            borderTop: '1px solid var(--color-primary-light)',
-            marginTop: '0.5rem',
-            paddingTop: '1rem'
           })}
         >
           <Bug size={20} />
           <span style={{ fontWeight: 500 }}>Report Bugs</span>
         </NavLink>
-      </nav>
-
-      <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-primary-light)' }}>
-        <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-          Logged in as <b>{user?.role}</b><br/>
-          {user?.department && <span>Dept: {user.department}</span>}
-        </div>
       </div>
     </div>
   );
