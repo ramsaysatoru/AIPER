@@ -54,6 +54,37 @@ router.put('/change-password', protect, async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 });
+// @route   PUT /api/auth/update-profile
+// @desc    Update email or password using current password authentication
+router.put('/update-profile', protect, async (req, res) => {
+  try {
+    const { currentPassword, newEmail, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!(await user.comparePassword(currentPassword))) {
+      return res.status(401).json({ message: 'Incorrect current password' });
+    }
+
+    if (newEmail) {
+      user.email = newEmail;
+    }
+    
+    if (newPassword) {
+      user.password = newPassword;
+    }
+
+    await user.save();
+    res.json({ message: 'Profile updated successfully', email: user.email });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
 
 // @route   POST /api/auth/request-otp
 // @desc    Send a 6-digit OTP to the user's registered email
