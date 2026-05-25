@@ -44,8 +44,7 @@ async function getNextUlr() {
     { $inc: { currentValue: 1 } },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
-  const effectiveValue = counter.currentValue + counter.offset;
-  const numStr = String(effectiveValue).padStart(8, '0');
+  const numStr = String(counter.currentValue).padStart(8, '0');
   return `${counter.prefix}${numStr}${counter.suffix}`;
 }
 
@@ -71,10 +70,9 @@ router.get('/next-sample-id', protect, async (req, res) => {
  */
 router.get('/next-ulr', protect, async (req, res) => {
   try {
-    const counter = await UlrCounter.findOne({}) || { prefix: 'TC-12434260', currentValue: 0, offset: 0, suffix: 'F' };
-    const nextValue = counter.currentValue + 1 + counter.offset;
-    const numStr = String(nextValue).padStart(8, '0');
-    res.json({ ulr: `${counter.prefix}${numStr}${counter.suffix}`, currentValue: counter.currentValue, offset: counter.offset });
+    const counter = await UlrCounter.findOne({}) || { prefix: 'TC-12434260', currentValue: 0, suffix: 'F' };
+    const numStr = String(counter.currentValue).padStart(8, '0');
+    res.json({ ulr: `${counter.prefix}${numStr}${counter.suffix}`, currentValue: counter.currentValue });
   } catch (err) {
     res.status(500).json({ message: 'Error calculating next ULR', error: err.message });
   }
@@ -89,10 +87,10 @@ router.put('/ulr-offset', protect, authorize('ADMIN_OFFICER'), async (req, res) 
     const { offset } = req.body;
     const counter = await UlrCounter.findOneAndUpdate(
       {},
-      { $set: { offset: parseInt(offset, 10) } },
+      { $set: { currentValue: parseInt(offset, 10), offset: 0 } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
-    res.json({ message: 'ULR offset updated', currentValue: counter.currentValue, offset: counter.offset });
+    res.json({ message: 'ULR value updated', currentValue: counter.currentValue });
   } catch (err) {
     res.status(500).json({ message: 'Error updating ULR offset', error: err.message });
   }

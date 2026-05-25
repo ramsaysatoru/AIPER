@@ -674,10 +674,10 @@ function Jobs() {
       await axios.put(`${API_URL}/api/jobs/ulr-offset`, { offset: parseInt(ulrOffset, 10) });
       setUlrOffset('');
       fetchUlrPreview();
-      alert('ULR Offset updated successfully');
+      alert('ULR value updated successfully');
     } catch (err) {
       console.error(err);
-      alert('Failed to update ULR offset: ' + (err.response?.data?.message || err.message));
+      alert('Failed to update ULR value: ' + (err.response?.data?.message || err.message));
     } finally {
       setIsUpdatingOffset(false);
     }
@@ -1089,7 +1089,7 @@ function Jobs() {
             setIsUlrSettingsOpen(!isUlrSettingsOpen);
             if (!isUlrSettingsOpen) setShowForm(false);
           }}>
-            ULR Offset
+            ULR Settings
           </button>
           <button className="btn btn-primary" onClick={() => {
             if (!showForm) {
@@ -1120,20 +1120,23 @@ function Jobs() {
           </h3>
           <div className="grid-2" style={{ gap: '2rem', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Next ULR Preview:</div>
+              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Current ULR:</div>
               <div style={{ fontFamily: 'monospace', fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'inline-block', border: '1px solid #93c5fd' }}>
                 {ulrPreview || 'Loading...'}
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the ULR that will be assigned to the next NABL job.</div>
+              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the current value of ULR.</div>
             </div>
             <div>
-              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Adjust ULR Offset:</div>
+              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Update ULR:</div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
-                  type="number"
-                  placeholder="New Offset (e.g. 5)"
+                  type="text"
+                  placeholder="Digits only"
                   value={ulrOffset}
-                  onChange={e => setUlrOffset(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length < 8) setUlrOffset(val);
+                  }}
                   style={{ flex: 1, border: '1px solid #93c5fd', backgroundColor: 'white' }}
                 />
                 <button
@@ -1142,10 +1145,21 @@ function Jobs() {
                   className="btn btn-primary"
                   style={{ backgroundColor: '#2563eb' }}
                 >
-                  {isUpdatingOffset ? 'Updating...' : 'Update Offset'}
+                  {isUpdatingOffset ? 'Updating...' : 'Update ULR'}
                 </button>
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Use this to skip forward in the ULR sequence if numbers were generated outside the system.</div>
+              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Input ULR</div>
+            </div>
+          </div>
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #bfdbfe' }}>
+            <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Last 5 Recent ULRs:</div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {jobs.filter(j => j.sample?.ulr_no).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0,5).map(j => (
+                <span key={j._id} style={{ fontFamily: 'monospace', fontSize: '0.85rem', backgroundColor: '#dbeafe', color: '#1e40af', padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid #bfdbfe' }}>
+                  {j.sample.ulr_no}
+                </span>
+              ))}
+              {jobs.filter(j => j.sample?.ulr_no).length === 0 && <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>No recent ULRs found.</span>}
             </div>
           </div>
         </div>
