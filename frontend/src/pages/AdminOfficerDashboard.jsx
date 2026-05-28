@@ -480,23 +480,18 @@ function Jobs() {
     }
   };
 
-  // Parameter search state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  // Parameter State - Cascading Selector
   const [selectedParams, setSelectedParams] = useState([]);
-  const [showAddParam, setShowAddParam] = useState(false);
-  const [newParam, setNewParam] = useState({ name: '', type: 'Micro', unit: '' });
-
-  // Hybrid mode: separate parameter lists for NABL and Non-NABL sub-jobs
+  const [groupMetadata, setGroupMetadata] = useState(null);
+  const [pesticidePanel, setPesticidePanel] = useState({ enabled: false, panelType: null });
+  
   const [nablParams, setNablParams] = useState([]);
+  const [nablGroupMetadata, setNablGroupMetadata] = useState(null);
+  const [nablPesticidePanel, setNablPesticidePanel] = useState({ enabled: false, panelType: null });
+  
   const [nonNablParams, setNonNablParams] = useState([]);
-  const [nablSearchTerm, setNablSearchTerm] = useState('');
-  const [nonNablSearchTerm, setNonNablSearchTerm] = useState('');
-  const [nablSearchResults, setNablSearchResults] = useState([]);
-  const [nonNablSearchResults, setNonNablSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isNablSearching, setIsNablSearching] = useState(false);
-  const [isNonNablSearching, setIsNonNablSearching] = useState(false);
+  const [nonNablGroupMetadata, setNonNablGroupMetadata] = useState(null);
+  const [nonNablPesticidePanel, setNonNablPesticidePanel] = useState({ enabled: false, panelType: null });
   const [ulrPreview, setUlrPreview] = useState('');
 
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -610,7 +605,22 @@ function Jobs() {
       special_handling_instructions: j.compliance?.special_handling_instructions || '',
       reopenReason: ''
     });
+    
+    // Set standard parameter states
     setSelectedParams(j.parameters || []);
+    setGroupMetadata(j.groupMetadata || null);
+    setPesticidePanel(j.pesticidePanel || { enabled: false, panelType: null });
+    
+    // Set NABL / Non-NABL empty by default, edit mode currently doesn't re-hydrate a full hybrid layout perfectly,
+    // but we can set them to empty just in case.
+    setNablParams([]);
+    setNablGroupMetadata(null);
+    setNablPesticidePanel({ enabled: false, panelType: null });
+    
+    setNonNablParams([]);
+    setNonNablGroupMetadata(null);
+    setNonNablPesticidePanel({ enabled: false, panelType: null });
+
     setShowForm(true);
     setSections({ customer: true, sample: true, compliance: true });
   };
@@ -749,8 +759,14 @@ function Jobs() {
       setReopenParentId(null);
       setEditingJobId(null);
       setSelectedParams([]);
+      setGroupMetadata(null);
+      setPesticidePanel({ enabled: false, panelType: null });
       setNablParams([]);
+      setNablGroupMetadata(null);
+      setNablPesticidePanel({ enabled: false, panelType: null });
       setNonNablParams([]);
+      setNonNablGroupMetadata(null);
+      setNonNablPesticidePanel({ enabled: false, panelType: null });
       setAssignedMicroHead('');
       setAssignedChemicalHead('');
       invalidateCache(CACHE_KEYS.JOBS);
