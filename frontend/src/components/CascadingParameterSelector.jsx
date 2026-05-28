@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import API_URL from '../utils/api';
 import Spinner from './Spinner';
-import { AlertCircle, Beaker, Search, X, Plus } from 'lucide-react';
+import { AlertCircle, Beaker, Search, X, Plus, Save } from 'lucide-react';
 
 const CascadingParameterSelector = ({ 
   label = "Parameters", 
@@ -237,6 +237,25 @@ const CascadingParameterSelector = ({
     setSelectedParams(prev => [...prev, ...newParams]);
   };
 
+  const handleUnitChange = (paramId, newUnit) => {
+    setSelectedParams(prev => prev.map(p => 
+      p._id === paramId ? { ...p, unit: newUnit } : p
+    ));
+  };
+
+  const handleSaveUnit = async (paramId, unit) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/parameters/${paramId}`, { unit }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Unit saved to database for future use.');
+    } catch (err) {
+      console.error('Error saving unit', err);
+      alert('Failed to save unit to database.');
+    }
+  };
+
   return (
     <div className={`cascading-selector ${modeClass}`} style={{ 
       display: 'flex', flexDirection: 'column', gap: '1rem', 
@@ -461,11 +480,11 @@ const CascadingParameterSelector = ({
           {/* Selected parameters list */}
           {selectedParams.length > 0 && (
             <div style={{ 
-              maxHeight: '250px', overflowY: 'auto', 
+              maxHeight: '250px', overflowY: 'auto', overflowX: 'auto',
               border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', 
               backgroundColor: 'var(--color-surface)' 
             }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <table style={{ width: '100%', minWidth: '400px', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                 <thead style={{ backgroundColor: 'var(--color-surface-hover)', position: 'sticky', top: 0 }}>
                   <tr>
                     <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid var(--color-border)' }}>Parameter Name</th>
@@ -483,7 +502,30 @@ const CascadingParameterSelector = ({
                           {p.type}
                         </span>
                       </td>
-                      <td style={{ padding: '0.4rem 0.5rem', color: 'var(--color-text-muted)' }}>{p.unit}</td>
+                      <td style={{ padding: '0.4rem 0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <input
+                            type="text"
+                            value={p.unit}
+                            onChange={(e) => handleUnitChange(p._id, e.target.value)}
+                            style={{ 
+                              width: '80px', padding: '0.25rem', fontSize: '0.8rem',
+                              border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)'
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveUnit(p._id, p.unit)}
+                            style={{ 
+                              background: 'none', border: 'none', cursor: 'pointer', 
+                              color: 'var(--color-primary)', padding: '0.25rem', display: 'flex' 
+                            }}
+                            title="Save as default for this parameter"
+                          >
+                            <Save size={14} />
+                          </button>
+                        </div>
+                      </td>
                       <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>
                         <button
                           type="button"

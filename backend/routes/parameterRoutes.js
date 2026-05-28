@@ -75,6 +75,30 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// Update a parameter's unit
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const { unit } = req.body;
+    if (unit === undefined) {
+      return res.status(400).json({ message: 'unit is required' });
+    }
+
+    const updated = await Parameter.findByIdAndUpdate(
+      req.params.id,
+      { unit: unit.trim() },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Parameter not found' });
+    }
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating parameter', error: err.message });
+  }
+});
+
 // Delete a parameter from the library
 router.delete('/:id', protect, async (req, res) => {
   try {
