@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Activity, Users, FileText, LayoutDashboard, Settings, ClipboardCheck, Bug, X } from 'lucide-react';
+import { Activity, Users, FileText, LayoutDashboard, Settings, ClipboardCheck, Bug, X, Database } from 'lucide-react';
 import logo from '../assets/Acropolis20Logo.png';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -21,6 +21,7 @@ export default function Sidebar({ isOpen, onClose }) {
           { to: '/admin-officer', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
           { to: '/admin-officer/jobs', icon: <Activity size={20} />, label: 'Job Distributor' },
           { to: '/admin-officer/users', icon: <Users size={20} />, label: 'User Management' },
+          { to: '/admin-officer/data-settings', icon: <Database size={20} />, label: 'Data Settings' },
           { to: '/admin-officer/audit', icon: <FileText size={20} />, label: 'Activity Logs' },
         ];
       case 'HEAD':

@@ -5,6 +5,7 @@ import { Trash2, Edit, Activity, Users as UsersIcon, Clock, CheckCircle, FileTex
 import JobLogTable from '../components/JobLogTable';
 import ReportViewer from '../components/ReportViewer';
 import CascadingParameterSelector from '../components/CascadingParameterSelector';
+import DataSettings from './DataSettings';
 import { AuthContext } from '../context/AuthContext';
 import { fetchWithCache, invalidateCache, CACHE_KEYS } from '../utils/cache';
 import Spinner from '../components/Spinner';
@@ -460,26 +461,6 @@ function Jobs() {
   const [reopenParentId, setReopenParentId] = useState(null);
   const [editingJobId, setEditingJobId] = useState(null);
 
-  const [ulrOffset, setUlrOffset] = useState('');
-  const [isUpdatingOffset, setIsUpdatingOffset] = useState(false);
-  const [isUlrSettingsOpen, setIsUlrSettingsOpen] = useState(false);
-
-  const handleUpdateOffset = async () => {
-    if (!ulrOffset) return;
-    setIsUpdatingOffset(true);
-    try {
-      await axios.put(`${API_URL}/api/jobs/ulr-offset`, { offset: parseInt(ulrOffset, 10) });
-      setUlrOffset('');
-      fetchUlrPreview();
-      alert('ULR value updated successfully');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to update ULR value: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setIsUpdatingOffset(false);
-    }
-  };
-
   // Parameter State - Cascading Selector
   const [selectedParams, setSelectedParams] = useState([]);
   const [groupMetadata, setGroupMetadata] = useState(null);
@@ -539,18 +520,10 @@ function Jobs() {
     } catch (err) { console.error('Could not fetch next sample ID', err); }
   };
 
-  const fetchUlrPreview = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/jobs/next-ulr`);
-      setUlrPreview(res.data.ulr);
-    } catch (err) { console.error('Could not fetch next ULR', err); }
-  };
-
   useEffect(() => {
     fetchJobs();
     fetchNextSerial();
     fetchHeads();
-    fetchUlrPreview();
   }, []);
 
   useEffect(() => {
@@ -809,12 +782,6 @@ function Jobs() {
           {editingJobId ? 'Edit Job' : (reopenParentId ? 'Retest / Reopen Job' : 'Job Distributor')}
         </h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className="btn" style={{ border: '1px solid var(--color-border)', backgroundColor: isUlrSettingsOpen ? 'var(--color-surface-hover)' : 'var(--color-surface)', color: 'var(--color-text-main)' }} onClick={() => {
-            setIsUlrSettingsOpen(!isUlrSettingsOpen);
-            if (!isUlrSettingsOpen) setShowForm(false);
-          }}>
-            ULR Settings
-          </button>
           <button className="btn btn-primary" onClick={() => {
             if (!showForm) {
               // Pre-select first heads when opening
@@ -824,7 +791,6 @@ function Jobs() {
               if (chemical.length > 0) setAssignedChemicalHead(chemical[0]._id);
             }
             setShowForm(!showForm);
-            if (!showForm) setIsUlrSettingsOpen(false);
             if (showForm) {
               setReopenParentId(null);
               setEditingJobId(null);
@@ -836,58 +802,6 @@ function Jobs() {
           </button>
         </div>
       </div>
-
-      {isUlrSettingsOpen && (
-        <div className="card" style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
-          <h3 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3a8a', fontSize: '1.1rem' }}>
-            <Activity size={18} /> NABL ULR Settings
-          </h3>
-          <div className="grid-2" style={{ gap: '2rem', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Current ULR:</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'inline-block', border: '1px solid #93c5fd' }}>
-                {ulrPreview || 'Loading...'}
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the current value of ULR.</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Update ULR:</div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="text"
-                  placeholder="Digits only"
-                  value={ulrOffset}
-                  onChange={e => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    if (val.length < 8) setUlrOffset(val);
-                  }}
-                  style={{ flex: 1, border: '1px solid #93c5fd', backgroundColor: 'white' }}
-                />
-                <button
-                  onClick={handleUpdateOffset}
-                  disabled={isUpdatingOffset || !ulrOffset}
-                  className="btn btn-primary"
-                  style={{ backgroundColor: '#2563eb' }}
-                >
-                  {isUpdatingOffset ? 'Updating...' : 'Update ULR'}
-                </button>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Input ULR</div>
-            </div>
-          </div>
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #bfdbfe' }}>
-            <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Last 5 Recent ULRs:</div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {jobs.filter(j => j.sample?.ulr_no).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0,5).map(j => (
-                <span key={j._id} style={{ fontFamily: 'monospace', fontSize: '0.85rem', backgroundColor: '#dbeafe', color: '#1e40af', padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid #bfdbfe' }}>
-                  {j.sample.ulr_no}
-                </span>
-              ))}
-              {jobs.filter(j => j.sample?.ulr_no).length === 0 && <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>No recent ULRs found.</span>}
-            </div>
-          </div>
-        </div>
-      )}
 
       {showForm && (
         <div className="card" style={{ marginBottom: '2rem', overflow: 'visible', border: reopenParentId ? '2px solid var(--color-warning)' : 'none', maxWidth: '100%', boxSizing: 'border-box' }}>
@@ -1296,6 +1210,7 @@ export default function AdminOfficerDashboard() {
 
       <Route path="/audit" element={<Audit />} />
       <Route path="/users" element={<UsersPage />} />
+      <Route path="/data-settings" element={<DataSettings />} />
       <Route path="/settings" element={<div>System Settings Page</div>} />
     </Routes>
   );

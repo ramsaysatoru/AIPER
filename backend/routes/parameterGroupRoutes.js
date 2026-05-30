@@ -14,6 +14,7 @@ router.get('/all', protect, async (req, res) => {
     const results = docs.map(d => {
       if (d.isPesticidePanel) {
         return {
+          _id: d._id,
           group: d.group,
           subGroup: d.subGroup,
           productCategories: d.productCategories || [],
@@ -27,6 +28,7 @@ router.get('/all', protect, async (req, res) => {
         };
       }
       return {
+        _id: d._id,
         group: d.group,
         subGroup: d.subGroup,
         productCategories: d.productCategories || [],
