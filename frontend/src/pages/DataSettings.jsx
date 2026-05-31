@@ -14,6 +14,8 @@ export default function DataSettings() {
   const [ulrPreview, setUlrPreview] = useState('');
   const [ulrOffset, setUlrOffset] = useState('');
   const [isUpdatingOffset, setIsUpdatingOffset] = useState(false);
+  const [confirmUlrModal, setConfirmUlrModal] = useState(false);
+  const [statusModal, setStatusModal] = useState({ show: false, type: '', title: '', message: '' });
 
   // Selection state
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -90,9 +92,9 @@ export default function DataSettings() {
   //  ULR HANDLERS
   // ═══════════════════════════════════
 
-  const handleUpdateUlrOffset = async () => {
-    if (!ulrOffset) return;
+  const executeUlrUpdate = async () => {
     setIsUpdatingOffset(true);
+    setConfirmUlrModal(false);
     try {
       const token = localStorage.getItem('token');
       await axios.put(`${API_URL}/api/jobs/ulr-offset`, { offset: parseInt(ulrOffset, 10) }, {
@@ -100,13 +102,18 @@ export default function DataSettings() {
       });
       setUlrOffset('');
       fetchUlrData();
-      alert('ULR value updated successfully');
+      setStatusModal({ show: true, type: 'success', title: 'Success', message: 'ULR value updated successfully.' });
     } catch (err) {
       console.error(err);
-      alert('Failed to update ULR value: ' + (err.response?.data?.message || err.message));
+      setStatusModal({ show: true, type: 'error', title: 'Update Failed', message: 'Failed to update ULR value: ' + (err.response?.data?.message || err.message) });
     } finally {
       setIsUpdatingOffset(false);
     }
+  };
+
+  const handleUpdateUlrOffset = () => {
+    if (!ulrOffset) return;
+    setConfirmUlrModal(true);
   };
 
   // ═══════════════════════════════════
@@ -358,7 +365,7 @@ export default function DataSettings() {
         {/* Left Panel: Hierarchy Tree */}
         <div className="card" style={{ flex: '1 1 350px', minWidth: '300px', display: 'flex', flexDirection: 'column', height: '600px' }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-            Parameter Hierarchy
+            Groups
           </h3>
           
           {loading ? (
@@ -430,9 +437,12 @@ export default function DataSettings() {
                               style={{ 
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                 padding: '0.4rem 0.5rem',
-                                backgroundColor: isSelected ? 'var(--color-primary-light)' : 'transparent',
+                                backgroundColor: isSelected ? 'var(--color-surface-hover)' : 'transparent',
                                 color: isSelected ? 'var(--color-primary)' : 'inherit',
-                                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                                fontWeight: isSelected ? 600 : 400,
+                                borderLeft: isSelected ? '3px solid var(--color-primary)' : '3px solid transparent',
+                                borderRadius: '0 var(--radius-sm) var(--radius-sm) 0', 
+                                cursor: 'pointer',
                                 fontSize: '0.9rem'
                               }}
                               onClick={() => setSelectedSubgroup(doc)}
@@ -668,6 +678,85 @@ export default function DataSettings() {
           )}
         </div>
       </div>
+
+      {/* ── CUSTOM CONFIRMATION MODAL ── */}
+      {confirmUlrModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, backdropFilter: 'blur(4px)'
+        }}>
+          <div className="card" style={{ width: '100%', maxWidth: '450px', padding: '2rem', animation: 'slideUp 0.3s ease', borderTop: '4px solid var(--color-warning)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', color: 'var(--color-warning)' }}>
+              <AlertCircle size={32} />
+              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Confirm ULR Update</h2>
+            </div>
+            
+            <p style={{ margin: '0 0 1.5rem 0', color: 'var(--color-text-main)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              Are you sure you want to update the NABL ULR offset to <strong>{ulrOffset}</strong>?
+              <br /><br />
+              This will affect the generation of future ULRs.
+            </p>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn" 
+                onClick={() => setConfirmUlrModal(false)}
+                style={{ border: '1px solid var(--color-warning)', color: 'var(--color-warning)', padding: '0.6rem 2rem', backgroundColor: 'transparent' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={executeUlrUpdate}
+                style={{ padding: '0.6rem 2rem', backgroundColor: 'var(--color-warning)', color: 'white', border: 'none' }}
+              >
+                Confirm Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CUSTOM STATUS MODAL ── */}
+      {statusModal.show && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, backdropFilter: 'blur(4px)'
+        }}>
+          <div className="card" style={{ 
+            width: '100%', maxWidth: '450px', padding: '2rem', animation: 'slideUp 0.3s ease', 
+            borderTop: `4px solid ${statusModal.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)'}` 
+          }}>
+            <div style={{ 
+              display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', 
+              color: statusModal.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)' 
+            }}>
+              {statusModal.type === 'error' ? <AlertCircle size={32} /> : <Check size={32} />}
+              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{statusModal.title}</h2>
+            </div>
+            
+            <p style={{ margin: '0 0 1.5rem 0', color: 'var(--color-text-main)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {statusModal.message}
+            </p>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn" 
+                onClick={() => setStatusModal({ show: false, type: '', title: '', message: '' })}
+                style={{ 
+                  border: `1px solid ${statusModal.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)'}`, 
+                  color: statusModal.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)', 
+                  padding: '0.6rem 2rem', backgroundColor: 'transparent' 
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
