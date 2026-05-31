@@ -53,6 +53,32 @@ export default function AssistantDashboard() {
     };
   }, [socket]);
 
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowConfirmModal(false);
+        setErrorModalData(null);
+      }
+      
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (showConfirmModal) {
+          executeSubmit();
+          return;
+        }
+        
+        const activeForm = document.querySelector('form:focus-within');
+        if (activeForm) {
+          const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+          activeForm.dispatchEvent(submitEvent);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showConfirmModal, errorModalData]);
+
   const formatDateTimeLocal = (dateString) => {
     if (!dateString) return '';
     const d = new Date(dateString);
@@ -504,7 +530,7 @@ export default function AssistantDashboard() {
             </div>
 
             <div className="flex-row-responsive" style={{ marginTop: '0.5rem' }}>
-              <button type="submit" className="btn btn-success" disabled={isSubmitting} style={{ flex: 2, justifyContent: 'center' }}>
+              <button type="submit" className="btn btn-success" title="Submit for Review (Ctrl + Enter)" disabled={isSubmitting} style={{ flex: 2, justifyContent: 'center' }}>
                 <Check size={18} style={{ marginRight: '0.5rem' }} /> {isSubmitting ? 'Submitting...' : 'Submit for Review'}
               </button>
               <button type="button" className="btn btn-primary" onClick={handleSaveProgress} disabled={isSubmitting} style={{ flex: 1, justifyContent: 'center' }}>{isSubmitting ? 'Saving...' : 'Save Draft'}</button>
@@ -574,6 +600,7 @@ export default function AssistantDashboard() {
                 type="button"
                 className="btn btn-primary" 
                 onClick={executeSubmit}
+                title="Confirm Submission (Ctrl + Enter)"
                 style={{ padding: '0.6rem 2rem' }}
                 disabled={isSubmitting}
               >

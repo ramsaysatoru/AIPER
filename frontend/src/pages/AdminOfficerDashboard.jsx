@@ -554,6 +554,36 @@ function Jobs() {
 
 
 
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowConfirmModal(false);
+        setDeleteConfirmJobId(null);
+      }
+      
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (showConfirmModal) {
+          executeSubmit();
+          return;
+        }
+        if (deleteConfirmJobId) {
+          executeDelete();
+          return;
+        }
+        
+        const activeForm = document.querySelector('form:focus-within');
+        if (activeForm) {
+          const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+          activeForm.dispatchEvent(submitEvent);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showConfirmModal, deleteConfirmJobId]);
+
   // Handle incoming Reopen request from JobLogTable
   useEffect(() => {
     if (location.state?.reopenJob) {
@@ -1084,7 +1114,7 @@ function Jobs() {
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', padding: '0.8rem 2rem' }} disabled={isSubmitting}>
+            <button type="submit" className="btn btn-primary" title="Save/Dispatch Job (Ctrl + Enter)" style={{ alignSelf: 'flex-start', padding: '0.8rem 2rem' }} disabled={isSubmitting}>
               {isSubmitting ? 'Processing...' : (editingJobId ? 'Save Changes' : (reopenParentId ? 'Save Retest Job' : 'Create Job & Dispatch'))}
             </button>
           </form>
@@ -1132,6 +1162,7 @@ function Jobs() {
               <button
                 className="btn btn-primary"
                 onClick={executeSubmit}
+                title="Confirm & Dispatch (Ctrl + Enter)"
                 style={{ padding: '0.6rem 2rem' }}
               >
                 Confirm & Dispatch

@@ -20,6 +20,7 @@ const CascadingParameterSelector = ({
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const searchRef = useRef(null);
 
   // Close suggestions on outside click
@@ -140,7 +141,6 @@ const CascadingParameterSelector = ({
   const handleSubGroupRemove = (subGroup) => {
     setSelectedSubGroups(prev => prev.filter(sg => sg !== subGroup));
     // Reset product category if it's no longer valid after subgroup removal
-    // (will be handled naturally by the productCategories memo + render)
   };
 
   const filteredSuggestions = availableParameters.filter(p => {
@@ -148,6 +148,34 @@ const CascadingParameterSelector = ({
     if (!searchTerm.trim()) return true;
     return p.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  // Reset active index when search term changes
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [searchTerm, filteredSuggestions]);
+
+  const handleSearchKeyDown = (e) => {
+    if (!showSuggestions || filteredSuggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex(prev => (prev < filteredSuggestions.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex(prev => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      const paramToAdd = filteredSuggestions[activeIndex];
+      if (paramToAdd) {
+        addParameter(paramToAdd);
+        setSearchTerm('');
+        setShowSuggestions(false);
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setSearchTerm('');
+    }
+  };
 
   const addParameter = (param) => {
     if (!selectedParams.some(sp => sp._id === param._id)) {
@@ -207,7 +235,6 @@ const CascadingParameterSelector = ({
       </h3>
       
       <div className="flex-row-responsive">
-        {/* GROUPS */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <label style={{ fontSize: '0.9rem', fontWeight: 500 }}>Select Group(s)</label>
           <select 
@@ -237,7 +264,6 @@ const CascadingParameterSelector = ({
           </div>
         </div>
 
-        {/* SUBGROUPS */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <label style={{ fontSize: '0.9rem', fontWeight: 500 }}>Select Sub-Group(s)</label>
           <select 
@@ -272,7 +298,6 @@ const CascadingParameterSelector = ({
       </div>
 
       <div className="flex-row-responsive">
-        {/* PRODUCT CATEGORY */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <label style={{ fontSize: '0.9rem', fontWeight: 500 }}>Product Category (Aggregate)</label>
           <select 
@@ -289,7 +314,6 @@ const CascadingParameterSelector = ({
         </div>
       </div>
 
-      {/* PESTICIDE PANEL BANNER */}
       {isPesticidePanel && (
         <div style={{ 
           backgroundColor: '#e8f4fd', color: '#1a5276', 
@@ -311,7 +335,6 @@ const CascadingParameterSelector = ({
         </div>
       )}
 
-      {/* PARAMETER SEARCH & SELECTION */}
       {hasNonPanelSubGroups && selectedSubGroups.length > 0 && (
         <div style={{ marginTop: '0.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -325,6 +348,7 @@ const CascadingParameterSelector = ({
               <button
                 type="button"
                 onClick={addAllAvailable}
+                title="Add all filtered parameters currently in view"
                 style={{ 
                   fontSize: '0.8rem', padding: '0.3rem 0.6rem', 
                   backgroundColor: 'var(--color-primary)', color: '#fff',
@@ -337,7 +361,6 @@ const CascadingParameterSelector = ({
             )}
           </div>
           
-          {/* Search box */}
           <div ref={searchRef} style={{ position: 'relative', marginBottom: '0.75rem' }}>
             <div style={{ 
               display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -348,9 +371,11 @@ const CascadingParameterSelector = ({
               <input
                 type="text"
                 placeholder={`Search from ${availableParameters.length} parameters...`}
+                title="Use Arrow keys to navigate, Tab/Enter to select"
                 value={searchTerm}
                 onChange={e => { setSearchTerm(e.target.value); setShowSuggestions(true); }}
                 onFocus={() => setShowSuggestions(true)}
+                onKeyDown={handleSearchKeyDown}
                 style={{ 
                   border: 'none', outline: 'none', width: '100%', 
                   backgroundColor: 'transparent', fontSize: '0.9rem' 
@@ -367,7 +392,6 @@ const CascadingParameterSelector = ({
               )}
             </div>
 
-            {/* Suggestions dropdown */}
             {showSuggestions && filteredSuggestions.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
@@ -376,18 +400,19 @@ const CascadingParameterSelector = ({
                 borderTop: 'none', borderRadius: '0 0 var(--radius-sm) var(--radius-sm)',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
               }}>
-                {filteredSuggestions.map(p => (
+                {filteredSuggestions.map((p, index) => (
                   <div
                     key={p._id}
                     onClick={() => addParameter(p)}
+                    onMouseEnter={() => setActiveIndex(index)}
                     style={{
                       padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       borderBottom: '1px solid var(--color-border)',
+                      backgroundColor: activeIndex === index ? 'var(--color-surface-hover)' : 'transparent',
+                      borderLeft: activeIndex === index ? '3px solid var(--color-primary)' : '3px solid transparent',
                       transition: 'background-color 0.1s'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <span>{p.name}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

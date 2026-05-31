@@ -87,6 +87,26 @@ export default function DataSettings() {
     }
   }, [data]);
 
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (statusModal.show) {
+          setStatusModal({ show: false, type: '', title: '', message: '' });
+        }
+        if (confirmUlrModal) {
+          setConfirmUlrModal(false);
+        }
+        if (isAddingGroup) setIsAddingGroup(false);
+        if (isAddingSubgroup) setIsAddingSubgroup(false);
+        if (isAddingProductCategory) setIsAddingProductCategory(false);
+        if (isAddingParam) setIsAddingParam(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [statusModal.show, confirmUlrModal, isAddingGroup, isAddingSubgroup, isAddingProductCategory, isAddingParam]);
 
   // ═══════════════════════════════════
   //  ULR HANDLERS
