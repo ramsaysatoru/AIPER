@@ -99,14 +99,13 @@ export default function DataSettings() {
         }
         if (isAddingGroup) setIsAddingGroup(false);
         if (isAddingSubgroup) setIsAddingSubgroup(false);
-        if (isAddingProductCategory) setIsAddingProductCategory(false);
         if (isAddingParam) setIsAddingParam(false);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [statusModal.show, confirmUlrModal, isAddingGroup, isAddingSubgroup, isAddingProductCategory, isAddingParam]);
+  }, [statusModal.show, confirmUlrModal, isAddingGroup, isAddingSubgroup, isAddingParam]);
 
   // ═══════════════════════════════════
   //  ULR HANDLERS

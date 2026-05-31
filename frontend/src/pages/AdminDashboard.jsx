@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Trash2, Edit, FileText, Search, ChevronDown, ChevronRight, Activity, Users as UsersIcon, Settings, Clock, CheckCircle } from 'lucide-react';
 
@@ -429,6 +429,7 @@ function UsersPage() {
 function Audit() {
   const [instances, setInstances] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const location = useLocation();
 
   const [auditLoading, setAuditLoading] = useState(
     () => !sessionStorage.getItem(CACHE_KEYS.INSTANCES) || !sessionStorage.getItem(CACHE_KEYS.JOBS)
@@ -468,7 +469,7 @@ function Audit() {
         {auditLoading && jobs.length === 0 ? (
           <div className="card"><Spinner message="Loading logs..." /></div>
         ) : (
-          <JobLogTable jobs={jobs} title="Global Job Lifecycle Logs" />
+          <JobLogTable jobs={jobs} title="Global Job Lifecycle Logs" defaultExpandedId={location.state?.expandJobId} />
         )}
       </div>
 

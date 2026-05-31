@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Fuse from 'fuse.js';
-import { Search, Folder, Settings, LayoutDashboard, Plus, FileText } from 'lucide-react';
+import { Search, Folder, Settings, LayoutDashboard, Plus, FileText, Users } from 'lucide-react';
 import { fetchWithCache, CACHE_KEYS } from '../utils/cache';
 import API_URL from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
 
 export default function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +14,8 @@ export default function CommandPalette() {
   
   const navigate = useNavigate();
   const inputRef = useRef(null);
+
+  const { user } = useContext(AuthContext);
 
   // Toggle Command Palette with Ctrl+/ or Cmd+/
   useEffect(() => {
@@ -28,7 +31,7 @@ export default function CommandPalette() {
 
   // Fetch jobs in the background when the palette opens for the first time
   useEffect(() => {
-    if (isOpen && jobs.length === 0) {
+    if (isOpen && jobs.length === 0 && (user?.role === 'ADMIN' || user?.role === 'ADMIN_OFFICER' || user?.role === 'HEAD')) {
       const token = localStorage.getItem('token');
       if (token) {
         fetchWithCache(`${API_URL}/api/jobs`, CACHE_KEYS.JOBS, setJobs, {
@@ -45,20 +48,41 @@ export default function CommandPalette() {
     }
   }, [isOpen]); // Depend on isOpen to fetch when it opens
 
-  // Setup Commands
-  const staticCommands = [
-    { id: 'nav-dashboard', type: 'navigation', title: 'Go to Dashboard', icon: <LayoutDashboard size={18} />, action: () => navigate('/admin-officer/jobs') },
-    { id: 'nav-settings', type: 'navigation', title: 'Go to Data Settings', icon: <Settings size={18} />, action: () => navigate('/admin-officer/data-settings') },
-    { id: 'act-new-job', type: 'action', title: 'Create New Job', icon: <Plus size={18} />, action: () => { navigate('/admin-officer/jobs'); window.scrollTo({ top: 0, behavior: 'smooth' }); } },
-  ];
+  // Setup Commands based on role
+  const getStaticCommands = () => {
+    const commands = [];
+    
+    if (user?.role === 'ADMIN') {
+      commands.push({ id: 'nav-dashboard', type: 'navigation', title: 'Go to Admin Dashboard', icon: <LayoutDashboard size={18} />, action: () => navigate('/admin') });
+      commands.push({ id: 'nav-users', type: 'navigation', title: 'Go to User Management', icon: <Users size={18} />, action: () => navigate('/admin/users') });
+      commands.push({ id: 'nav-audit', type: 'navigation', title: 'Go to Audit Logs', icon: <FileText size={18} />, action: () => navigate('/admin/audit') });
+    } else if (user?.role === 'ADMIN_OFFICER') {
+      commands.push({ id: 'nav-dashboard', type: 'navigation', title: 'Go to Job Distributor (Dashboard)', icon: <LayoutDashboard size={18} />, action: () => navigate('/admin-officer') });
+      commands.push({ id: 'nav-settings', type: 'navigation', title: 'Go to Data Settings', icon: <Settings size={18} />, action: () => navigate('/admin-officer/data-settings') });
+      commands.push({ id: 'act-new-job', type: 'action', title: 'Create New Job', icon: <Plus size={18} />, action: () => { navigate('/admin-officer'); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
+    } else if (user?.role === 'HEAD') {
+      commands.push({ id: 'nav-dashboard', type: 'navigation', title: 'Go to Head Dashboard', icon: <LayoutDashboard size={18} />, action: () => navigate('/head') });
+    } else if (user?.role === 'ASSISTANT') {
+      commands.push({ id: 'nav-dashboard', type: 'navigation', title: 'Go to Assistant Dashboard', icon: <LayoutDashboard size={18} />, action: () => navigate('/assistant') });
+    }
+  
+    // Common commands
+    commands.push({ id: 'nav-notifications', type: 'navigation', title: 'View Notifications', icon: <FileText size={18} />, action: () => navigate('/notifications') });
+    
+    return commands;
+  };
 
-  const jobCommands = jobs.map(j => ({
-    id: `job-${j._id}`,
-    type: 'job',
-    title: `Job: ${j.clientName} (${j.jobCode || 'Pending'})`,
-    description: j.sample?.sample_name || 'No sample name',
-    action: () => navigate('/admin-officer/jobs', { state: { expandJobId: j._id } })
-  }));
+  const staticCommands = getStaticCommands();
+
+  const jobCommands = (user?.role === 'ADMIN' || user?.role === 'ADMIN_OFFICER' || user?.role === 'HEAD')
+    ? jobs.map(j => ({
+        id: `job-${j._id}`,
+        type: 'job',
+        title: `Job: ${j.clientName} (${j.jobCode || 'Pending'})`,
+        description: j.sample?.sample_name || 'No sample name',
+        action: () => navigate(user.role === 'ADMIN' ? '/admin/audit' : (user.role === 'HEAD' ? '/head/audit' : '/admin-officer'), { state: { expandJobId: j._id } })
+      }))
+    : [];
 
   const allCommands = [...staticCommands, ...jobCommands];
 

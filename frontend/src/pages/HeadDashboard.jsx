@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import { Trash2, Edit, Plus, Check, FileText, Activity, Users, Settings, Clock, CheckCircle, ClipboardCheck, RotateCcw, ChevronDown, ChevronRight, ArrowRightLeft, Send, PackageCheck } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import JobLogTable from '../components/JobLogTable';
 import { fetchWithCache, invalidateCache, CACHE_KEYS } from '../utils/cache';
@@ -1295,6 +1295,7 @@ export default function HeadDashboard() {
 function Audit() {
   const [instances, setInstances] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const location = useLocation();
   const [auditLoading, setAuditLoading] = useState(
     () => !sessionStorage.getItem(CACHE_KEYS.INSTANCES) || !sessionStorage.getItem(CACHE_KEYS.JOBS)
   );
@@ -1345,7 +1346,7 @@ function Audit() {
         {auditLoading && jobs.length === 0 ? (
           <div className="card"><Spinner message="Loading logs..." /></div>
         ) : (
-          <JobLogTable jobs={jobs} title="Lifecycle Tracker" />
+          <JobLogTable jobs={jobs} title="Lifecycle Tracker" defaultExpandedId={location.state?.expandJobId} />
         )}
       </div>
 
