@@ -646,15 +646,13 @@ function Jobs() {
     setGroupMetadata(j.groupMetadata || null);
     setPesticidePanel(j.pesticidePanel || { enabled: false, panelType: null });
     
-    // Set NABL / Non-NABL empty by default, edit mode currently doesn't re-hydrate a full hybrid layout perfectly,
-    // but we can set them to empty just in case.
-    setNablParams([]);
-    setNablGroupMetadata(null);
-    setNablPesticidePanel({ enabled: false, panelType: null });
+    setNablParams(j.nablParameters || []);
+    setNablGroupMetadata(j.nablGroupMetadata || null);
+    setNablPesticidePanel(j.nablPesticidePanel || { enabled: false, panelType: null });
     
-    setNonNablParams([]);
-    setNonNablGroupMetadata(null);
-    setNonNablPesticidePanel({ enabled: false, panelType: null });
+    setNonNablParams(j.nonNablParameters || []);
+    setNonNablGroupMetadata(j.nonNablGroupMetadata || null);
+    setNonNablPesticidePanel(j.nonNablPesticidePanel || { enabled: false, panelType: null });
 
     setShowForm(true);
     setSections({ customer: true, sample: true, compliance: true });
@@ -674,12 +672,12 @@ function Jobs() {
       return;
     }
     if (formData.nabl_mode === 'hybrid') {
-      if (nablParams.length === 0) {
-        alert("NABL job must have at least one Test Parameter.");
+      if (nablParams.length === 0 && !nablPesticidePanel?.enabled) {
+        alert("NABL job must have at least one Test Parameter or a Pesticide Panel.");
         return;
       }
-      if (nonNablParams.length === 0) {
-        alert("Non-NABL job must have at least one Test Parameter.");
+      if (nonNablParams.length === 0 && !nonNablPesticidePanel?.enabled) {
+        alert("Non-NABL job must have at least one Test Parameter or a Pesticide Panel.");
         return;
       }
       const missingNablUnit = nablParams.find(p => !p.unit || !p.unit.trim());
@@ -693,8 +691,8 @@ function Jobs() {
         return;
       }
     } else {
-      if (selectedParams.length === 0) {
-        alert("Please add at least one Test Parameter before submitting.");
+      if (selectedParams.length === 0 && !pesticidePanel?.enabled) {
+        alert("Please add at least one Test Parameter or a Pesticide Panel before submitting.");
         return;
       }
       const missingUnit = selectedParams.find(p => !p.unit || !p.unit.trim());
@@ -772,6 +770,12 @@ function Jobs() {
         parameters,
         nablParameters: nablParametersData,
         nonNablParameters: nonNablParametersData,
+        groupMetadata,
+        pesticidePanel,
+        nablGroupMetadata,
+        nablPesticidePanel,
+        nonNablGroupMetadata,
+        nonNablPesticidePanel,
         assignedMicroHead,
         assignedChemicalHead,
         sampleFlow: {}
