@@ -10,7 +10,7 @@ import { fetchWithCache, invalidateCache, CACHE_KEYS } from '../utils/cache';
 import Spinner from '../components/Spinner';
 import { useSocket } from '../context/SocketContext';
 import API_URL from '../utils/api';
-
+import DataSettings from './DataSettings';
 const formatJobCode = (code) => {
   if (!code) return '';
   return code.replace(/-N[12]([a-z]?)(?:-v\d+)?$/g, '-N$1').replace(/-[12][a-z]?(?:-v\d+)?$/g, '');
@@ -1300,6 +1300,7 @@ export default function HeadDashboard() {
       <Route path="/dispatcher" element={<Dispatcher />} />
       <Route path="/review" element={<ReviewQueue />} />
       <Route path="/audit" element={<Audit />} />
+      <Route path="/data-settings" element={<DataSettings />} />
     </Routes>
   );
 }

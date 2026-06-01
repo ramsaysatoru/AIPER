@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import API_URL from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
 import { Database, Plus, Edit, Trash2, X, Check, Search, AlertCircle, Activity, Save } from 'lucide-react';
 import Spinner from '../components/Spinner';
 
 export default function DataSettings() {
+  const { user } = useContext(AuthContext);
   const [data, setData] = useState([]);
+  const [globalParameters, setGlobalParameters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [recentUlrs, setRecentUlrs] = useState([]);
@@ -43,10 +46,12 @@ export default function DataSettings() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/api/parameter-groups/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setData(res.data || []);
+      const [groupsRes, paramsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/parameter-groups/all`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/parameters`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setData(groupsRes.data || []);
+      setGlobalParameters(paramsRes.data || []);
     } catch (err) {
       console.error(err);
       setError('Failed to load data');
@@ -279,11 +284,11 @@ export default function DataSettings() {
     }
   };
 
-  const handleAddParameter = async () => {
-    if (!newParam.name.trim() || !newParam.unit.trim() || !selectedSubgroup) return;
+  const handleAddGlobalParameter = async () => {
+    if (!newParam.name.trim() || !newParam.unit.trim()) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/api/data-settings/subgroups/${selectedSubgroup._id}/parameters`, newParam, {
+      await axios.post(`${API_URL}/api/parameters`, newParam, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNewParam({ name: '', type: 'Chemical', unit: '' });
@@ -294,28 +299,28 @@ export default function DataSettings() {
     }
   };
 
-  const handleRemoveParameter = async (paramId) => {
-    if (!window.confirm("Are you sure you want to remove this parameter from this subgroup?")) return;
+  const handleRemoveGlobalParameter = async (paramId) => {
+    if (!window.confirm("Are you sure you want to delete this parameter from the global library?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/data-settings/subgroups/${selectedSubgroup._id}/parameters/${paramId}`, {
+      await axios.delete(`${API_URL}/api/parameters/${paramId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Error removing parameter');
+      alert(err.response?.data?.message || 'Error deleting parameter');
     }
   };
 
-  const handleUpdateParameterUnit = async (paramId, unit) => {
+  const handleUpdateGlobalParameter = async (paramId, field, value) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/api/parameters/${paramId}`, { unit }, {
+      await axios.put(`${API_URL}/api/parameters/${paramId}`, { [field]: value }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Error updating unit');
+      alert(err.response?.data?.message || 'Error updating parameter');
     }
   };
 
@@ -329,55 +334,57 @@ export default function DataSettings() {
       </h1>
 
       {/* ULR Settings Card */}
-      <div className="card" style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
-        <h3 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3a8a', fontSize: '1.1rem' }}>
-          <Activity size={18} /> NABL ULR Settings
-        </h3>
-        <div className="grid-2" style={{ gap: '2rem', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Current ULR:</div>
-            <div style={{ fontFamily: 'monospace', fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'inline-block', border: '1px solid #93c5fd' }}>
-              {ulrPreview || 'Loading...'}
+      {user?.role !== 'HEAD' && (
+        <div className="card" style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+          <h3 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3a8a', fontSize: '1.1rem' }}>
+            <Activity size={18} /> NABL ULR Settings
+          </h3>
+          <div className="grid-2" style={{ gap: '2rem', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Current ULR:</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'inline-block', border: '1px solid #93c5fd' }}>
+                {ulrPreview || 'Loading...'}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the current value of ULR.</div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>This is the current value of ULR.</div>
+            <div>
+              <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Update ULR:</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  placeholder="Digits only"
+                  value={ulrOffset}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length < 8) setUlrOffset(val);
+                  }}
+                  style={{ flex: 1, border: '1px solid #93c5fd', backgroundColor: 'white' }}
+                />
+                <button
+                  onClick={handleUpdateUlrOffset}
+                  disabled={isUpdatingOffset || !ulrOffset}
+                  className="btn btn-primary"
+                  style={{ backgroundColor: '#2563eb' }}
+                >
+                  {isUpdatingOffset ? 'Updating...' : 'Update ULR'}
+                </button>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Input ULR</div>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Update ULR:</div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                placeholder="Digits only"
-                value={ulrOffset}
-                onChange={e => {
-                  const val = e.target.value.replace(/\D/g, '');
-                  if (val.length < 8) setUlrOffset(val);
-                }}
-                style={{ flex: 1, border: '1px solid #93c5fd', backgroundColor: 'white' }}
-              />
-              <button
-                onClick={handleUpdateUlrOffset}
-                disabled={isUpdatingOffset || !ulrOffset}
-                className="btn btn-primary"
-                style={{ backgroundColor: '#2563eb' }}
-              >
-                {isUpdatingOffset ? 'Updating...' : 'Update ULR'}
-              </button>
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #bfdbfe' }}>
+            <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Last 5 Recent ULRs:</div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {recentUlrs.map(j => (
+                <span key={j._id} style={{ fontFamily: 'monospace', fontSize: '0.85rem', backgroundColor: '#dbeafe', color: '#1e40af', padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid #bfdbfe' }}>
+                  {j.sample.ulr_no}
+                </span>
+              ))}
+              {recentUlrs.length === 0 && <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>No recent ULRs found.</span>}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Input ULR</div>
           </div>
         </div>
-        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #bfdbfe' }}>
-          <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600, marginBottom: '0.5rem' }}>Last 5 Recent ULRs:</div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {recentUlrs.map(j => (
-              <span key={j._id} style={{ fontFamily: 'monospace', fontSize: '0.85rem', backgroundColor: '#dbeafe', color: '#1e40af', padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid #bfdbfe' }}>
-                {j.sample.ulr_no}
-              </span>
-            ))}
-            {recentUlrs.length === 0 && <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>No recent ULRs found.</span>}
-          </div>
-        </div>
-      </div>
+      )}
 
       <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
         
@@ -598,102 +605,109 @@ export default function DataSettings() {
                 </div>
               </div>
 
-              {/* Parameters Table */}
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Parameters</h4>
-                  
-                  {/* Search inside table */}
-                  {!selectedSubgroup.isPesticidePanel && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.25rem 0.5rem' }}>
-                      <Search size={14} style={{ color: 'var(--color-text-muted)' }} />
-                      <input 
-                        placeholder="Search params..." 
-                        value={paramSearch}
-                        onChange={e => setParamSearch(e.target.value)}
-                        style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '0.85rem', width: '120px' }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {selectedSubgroup.isPesticidePanel ? (
-                  <div style={{ padding: '1rem', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 'var(--radius-md)', color: '#b45309', fontSize: '0.9rem' }}>
-                    <AlertCircle size={18} style={{ marginBottom: '0.5rem' }} />
-                    <br/>
-                    Pesticide panels and their sub-panels (GCMSMS / LCMSMS) are structurally locked and managed by the system seed. 
-                    <br/><br/>
-                    Current config: {selectedSubgroup.pesticideSubPanels?.map(sp => `${sp.panelName} (${sp.parameterCount} params)`).join(', ')}
-                  </div>
-                ) : (
-                  <div style={{ flex: 1, overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                      <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--color-surface-hover)', zIndex: 1 }}>
-                        <tr>
-                          <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid var(--color-border)' }}>Name</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid var(--color-border)', width: '80px' }}>Type</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid var(--color-border)', width: '120px' }}>Unit</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'center', borderBottom: '1px solid var(--color-border)', width: '40px' }}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedSubgroup.parameters
-                          ?.filter(p => !paramSearch || p.name.toLowerCase().includes(paramSearch.toLowerCase()))
-                          .map(p => (
-                          <tr key={p._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                            <td style={{ padding: '0.4rem 0.5rem' }}>{p.name}</td>
-                            <td style={{ padding: '0.4rem 0.5rem' }}>
-                              <span className={`badge ${p.type === 'Micro' ? 'badge-primary' : 'badge-secondary'}`} style={{ fontSize: '0.7rem' }}>
-                                {p.type}
-                              </span>
-                            </td>
-                            <td style={{ padding: '0.4rem 0.5rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <input
-                                  type="text"
-                                  defaultValue={p.unit}
-                                  onBlur={(e) => {
-                                    if(e.target.value !== p.unit) handleUpdateParameterUnit(p._id, e.target.value);
-                                  }}
-                                  style={{ width: '80px', padding: '0.2rem', fontSize: '0.8rem', border: '1px solid transparent', borderRadius: 'var(--radius-sm)', background: 'transparent' }}
-                                  onFocus={e => Object.assign(e.target.style, { border: '1px solid var(--color-primary)', background: '#fff' })}
-                                />
-                                <Save size={12} style={{ color: 'var(--color-text-muted)' }} />
-                              </div>
-                            </td>
-                            <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>
-                              <button onClick={() => handleRemoveParameter(p._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: '0.25rem' }}><Trash2 size={18}/></button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                
-                {/* Add Parameter Row */}
-                {!selectedSubgroup.isPesticidePanel && (
-                  <div style={{ marginTop: '0.5rem' }}>
-                    {isAddingParam ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--color-border)' }}>
-                        <input placeholder="Name..." value={newParam.name} onChange={e => setNewParam({...newParam, name: e.target.value})} style={{ flex: 2, padding: '0.3rem', fontSize: '0.85rem' }} />
-                        <select value={newParam.type} onChange={e => setNewParam({...newParam, type: e.target.value})} style={{ flex: 1, padding: '0.3rem', fontSize: '0.85rem' }}>
-                          <option value="Chemical">Chemical</option>
-                          <option value="Micro">Micro</option>
-                        </select>
-                        <input placeholder="Unit..." value={newParam.unit} onChange={e => setNewParam({...newParam, unit: e.target.value})} style={{ flex: 1, padding: '0.3rem', fontSize: '0.85rem' }} />
-                        <button onClick={handleAddParameter} style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '0.3rem 0.6rem', cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
-                        <button onClick={() => setIsAddingParam(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', color: 'var(--color-text-muted)' }}><X size={18}/></button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setIsAddingParam(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.9rem' }}>
-                        <Plus size={16} /> Add Parameter
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
             </>
+          )}
+        </div>
+      </div>
+
+      {/* ── GLOBAL PARAMETER LIBRARY ── */}
+      <div className="card" style={{ marginBottom: '2rem', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary-dark)', fontSize: '1.1rem' }}>
+            <Database size={18} /> Global Parameter Library
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.25rem 0.5rem' }}>
+            <Search size={14} style={{ color: 'var(--color-text-muted)' }} />
+            <input 
+              placeholder="Search parameters..." 
+              value={paramSearch}
+              onChange={e => setParamSearch(e.target.value)}
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '0.85rem', width: '180px' }}
+            />
+          </div>
+        </div>
+
+        <div style={{ flex: 1, maxHeight: '500px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--color-surface-hover)', zIndex: 1 }}>
+              <tr>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', borderBottom: '1px solid var(--color-border)' }}>Name</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', borderBottom: '1px solid var(--color-border)', width: '120px' }}>Type</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', borderBottom: '1px solid var(--color-border)', width: '150px' }}>Unit</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'center', borderBottom: '1px solid var(--color-border)', width: '60px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {globalParameters
+                .filter(p => !paramSearch || p.name.toLowerCase().includes(paramSearch.toLowerCase()))
+                .map(p => (
+                <tr key={p._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <td style={{ padding: '0.75rem 1rem' }}>
+                    <input
+                      type="text"
+                      defaultValue={p.name}
+                      onBlur={(e) => {
+                        if(e.target.value !== p.name && e.target.value.trim() !== '') handleUpdateGlobalParameter(p._id, 'name', e.target.value);
+                      }}
+                      style={{ width: '100%', padding: '0.2rem', fontSize: '0.9rem', border: '1px solid transparent', borderRadius: 'var(--radius-sm)', background: 'transparent' }}
+                      onFocus={e => Object.assign(e.target.style, { border: '1px solid var(--color-primary)', background: '#fff' })}
+                    />
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem' }}>
+                    <select
+                      defaultValue={p.type}
+                      onChange={(e) => handleUpdateGlobalParameter(p._id, 'type', e.target.value)}
+                      style={{ padding: '0.2rem', fontSize: '0.9rem', border: '1px solid transparent', borderRadius: 'var(--radius-sm)', background: 'transparent' }}
+                    >
+                      <option value="Chemical">Chemical</option>
+                      <option value="Micro">Micro</option>
+                    </select>
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <input
+                        type="text"
+                        defaultValue={p.unit}
+                        onBlur={(e) => {
+                          if(e.target.value !== p.unit) handleUpdateGlobalParameter(p._id, 'unit', e.target.value);
+                        }}
+                        style={{ width: '100px', padding: '0.2rem', fontSize: '0.9rem', border: '1px solid transparent', borderRadius: 'var(--radius-sm)', background: 'transparent' }}
+                        onFocus={e => Object.assign(e.target.style, { border: '1px solid var(--color-primary)', background: '#fff' })}
+                      />
+                      <Save size={14} style={{ color: 'var(--color-text-muted)' }} />
+                    </div>
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                    <button onClick={() => handleRemoveGlobalParameter(p._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: '0.25rem' }}><Trash2 size={18}/></button>
+                  </td>
+                </tr>
+              ))}
+              {globalParameters.length === 0 && (
+                <tr>
+                  <td colSpan="4" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>No parameters found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Add Global Parameter Row */}
+        <div>
+          {isAddingParam ? (
+            <div style={{ display: 'flex', gap: '0.75rem', padding: '1rem', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-border)' }}>
+              <input placeholder="Parameter Name..." value={newParam.name} onChange={e => setNewParam({...newParam, name: e.target.value})} style={{ flex: 2, padding: '0.5rem', fontSize: '0.9rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }} />
+              <select value={newParam.type} onChange={e => setNewParam({...newParam, type: e.target.value})} style={{ flex: 1, padding: '0.5rem', fontSize: '0.9rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>
+                <option value="Chemical">Chemical</option>
+                <option value="Micro">Micro</option>
+              </select>
+              <input placeholder="Unit..." value={newParam.unit} onChange={e => setNewParam({...newParam, unit: e.target.value})} style={{ flex: 1, padding: '0.5rem', fontSize: '0.9rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }} />
+              <button onClick={handleAddGlobalParameter} style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500 }}>Save Parameter</button>
+              <button onClick={() => setIsAddingParam(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', color: 'var(--color-text-muted)' }}><X size={20}/></button>
+            </div>
+          ) : (
+            <button onClick={() => setIsAddingParam(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--color-surface-hover)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.95rem', width: '100%', justifyContent: 'center' }}>
+              <Plus size={18} /> Add New Parameter
+            </button>
           )}
         </div>
       </div>

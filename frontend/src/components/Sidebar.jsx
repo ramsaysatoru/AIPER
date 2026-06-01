@@ -30,6 +30,7 @@ export default function Sidebar({ isOpen, onClose }) {
           { to: '/head/review', icon: <ClipboardCheck size={20} />, label: 'Review Queue' },
           { to: '/head/assistants', icon: <Users size={20} />, label: 'Assistants' },
           { to: '/head/dispatcher', icon: <Activity size={20} />, label: 'Job Dispatcher' },
+          { to: '/head/data-settings', icon: <Database size={20} />, label: 'Data Settings' },
           { to: '/head/audit', icon: <FileText size={20} />, label: 'Activity Logs' },
         ];
       case 'ASSISTANT':

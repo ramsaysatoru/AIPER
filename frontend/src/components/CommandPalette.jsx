@@ -62,6 +62,7 @@ export default function CommandPalette() {
       commands.push({ id: 'act-new-job', type: 'action', title: 'Create New Job', icon: <Plus size={18} />, action: () => { navigate('/admin-officer'); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
     } else if (user?.role === 'HEAD') {
       commands.push({ id: 'nav-dashboard', type: 'navigation', title: 'Go to Department Dashboard', icon: <LayoutDashboard size={18} />, action: () => navigate('/head') });
+      commands.push({ id: 'nav-settings', type: 'navigation', title: 'Go to Data Settings', icon: <Settings size={18} />, action: () => navigate('/head/data-settings') });
     } else if (user?.role === 'ASSISTANT') {
       commands.push({ id: 'nav-dashboard', type: 'navigation', title: 'Go to Task Queue', icon: <LayoutDashboard size={18} />, action: () => navigate('/assistant') });
     }

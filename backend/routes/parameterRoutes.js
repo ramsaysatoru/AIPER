@@ -75,17 +75,32 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// Update a parameter's unit
+// Update a parameter
 router.put('/:id', protect, async (req, res) => {
   try {
-    const { unit } = req.body;
-    if (unit === undefined) {
-      return res.status(400).json({ message: 'unit is required' });
+    const { name, type, unit } = req.body;
+    const parameterId = req.params.id;
+
+    // Build update object
+    const updateData = {};
+    if (unit !== undefined) updateData.unit = unit.trim();
+    if (type !== undefined) updateData.type = type;
+    if (name !== undefined) {
+      updateData.name = name.trim();
+      
+      // Check for name collision if name is being changed
+      const existing = await Parameter.findOne({ 
+        name: { $regex: new RegExp(`^${updateData.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        _id: { $ne: parameterId }
+      });
+      if (existing) {
+        return res.status(400).json({ message: `Parameter "${updateData.name}" already exists in the library` });
+      }
     }
 
     const updated = await Parameter.findByIdAndUpdate(
-      req.params.id,
-      { unit: unit.trim() },
+      parameterId,
+      updateData,
       { new: true }
     );
 
@@ -123,22 +138,6 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
-// Update a parameter
-router.put('/:id', protect, async (req, res) => {
-  try {
-    const { unit } = req.body;
-    const parameter = await Parameter.findById(req.params.id);
-    if (!parameter) {
-      return res.status(404).json({ message: 'Parameter not found' });
-    }
-    
-    if (unit !== undefined) parameter.unit = unit.trim();
-    
-    await parameter.save();
-    res.json(parameter);
-  } catch (err) {
-    res.status(500).json({ message: 'Error updating parameter', error: err.message });
-  }
-});
+
 
 module.exports = router;

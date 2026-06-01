@@ -23,6 +23,25 @@ const CascadingParameterSelector = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const searchRef = useRef(null);
 
+  // Global parameters state
+  const [globalParameters, setGlobalParameters] = useState([]);
+
+  // Fetch global parameters on mount
+  useEffect(() => {
+    const fetchParams = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${API_URL}/api/parameters`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setGlobalParameters(res.data || []);
+      } catch (err) {
+        console.error('Failed to fetch global parameters', err);
+      }
+    };
+    fetchParams();
+  }, []);
+
   // Close suggestions on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -77,18 +96,9 @@ const CascadingParameterSelector = ({
   }, [matchedDocs]);
 
   const availableParameters = useMemo(() => {
-    const params = [];
-    matchedDocs.forEach(d => {
-      if (!d.isPesticidePanel) {
-        (d.parameters || []).forEach(p => {
-          if (!params.some(ext => ext._id === p._id)) {
-            params.push(p);
-          }
-        });
-      }
-    });
-    return params;
-  }, [matchedDocs]);
+    // Return all global parameters instead of restricting by matchedDocs
+    return globalParameters;
+  }, [globalParameters]);
 
   const hasNonPanelSubGroups = useMemo(() => matchedDocs.some(d => !d.isPesticidePanel), [matchedDocs]);
 
