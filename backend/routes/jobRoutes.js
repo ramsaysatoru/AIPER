@@ -155,9 +155,9 @@ router.post('/', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
     const firstDept = sampleFlow?.firstDepartment || 'micro';
     
     // Helper to determine distribution object for a set of parameters
-    const getDistribution = (params) => {
+    const getDistribution = (params, isPesticideEnabled = false) => {
       const hasMicro = params && params.some(p => p.type === 'Micro');
-      const hasChemical = params && params.some(p => p.type === 'Chemical');
+      const hasChemical = (params && params.some(p => p.type === 'Chemical')) || isPesticideEnabled;
       
       let microStatus = 'PENDING';
       let chemicalStatus = 'PENDING';
@@ -213,8 +213,8 @@ router.post('/', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
 
     if (nablMode === 'hybrid') {
       const ulr = await getNextUlr();
-      const nablDist = getDistribution(nablParameters);
-      const nonNablDist = getDistribution(nonNablParameters);
+      const nablDist = getDistribution(nablParameters, nablPesticidePanel?.enabled);
+      const nonNablDist = getDistribution(nonNablParameters, nonNablPesticidePanel?.enabled);
 
       // Create NABL job
       const nablJob = await Job.create({
@@ -263,7 +263,7 @@ router.post('/', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
       // nabl or non_nabl
       const isNabl = nablMode === 'nabl';
       const ulr = isNabl ? await getNextUlr() : null;
-      const dist = getDistribution(parameters);
+      const dist = getDistribution(parameters, pesticidePanel?.enabled);
 
       const job = await Job.create({
         jobCode: baseJobCode,
@@ -359,14 +359,14 @@ router.post('/:id/retest', protect, authorize('ADMIN_OFFICER'), async (req, res)
     const retestNumber = retestCount + 1;
     const jobCode = `${rootJob.jobCode}-retest-${retestNumber}`;
 
-    const { customer, sample, compliance, parameters, reopenReason } = req.body;
+    const { customer, sample, compliance, parameters, groupMetadata, pesticidePanel, reopenReason } = req.body;
 
-    if (!parameters || !Array.isArray(parameters)) {
-      return res.status(400).json({ message: 'Parameters are required for retest' });
+    if (!parameters || (!Array.isArray(parameters) && !pesticidePanel?.enabled)) {
+      return res.status(400).json({ message: 'Parameters or Pesticide Panel are required for retest' });
     }
 
-    const hasMicro = parameters.some(p => p.type && p.type.toLowerCase() === 'micro');
-    const hasChemical = parameters.some(p => p.type && p.type.toLowerCase() !== 'micro');
+    const hasMicro = parameters && parameters.some(p => p.type && p.type.toLowerCase() === 'micro');
+    const hasChemical = (parameters && parameters.some(p => p.type && p.type.toLowerCase() !== 'micro')) || pesticidePanel?.enabled;
 
     const job = new Job({
       jobCode,
@@ -376,7 +376,9 @@ router.post('/:id/retest', protect, authorize('ADMIN_OFFICER'), async (req, res)
       customer,
       sample,
       compliance,
-      parameters,
+      parameters: parameters || [],
+      groupMetadata,
+      pesticidePanel,
       distribution: {
         micro: { required: hasMicro, status: 'PENDING' },
         chemical: { required: hasChemical, status: 'PENDING' }
