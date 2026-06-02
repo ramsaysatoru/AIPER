@@ -9,8 +9,8 @@ router.get('/', protect, authorize('ADMIN', 'ADMIN_OFFICER', 'HEAD'), async (req
   try {
     let query = {};
     if (req.user.role === 'HEAD') {
-      // Head can only see assistants they created
-      query = { role: 'ASSISTANT', createdBy: req.user._id };
+      // Head can see all assistants in their department
+      query = { role: 'ASSISTANT', department: req.user.department };
     }
     const users = await User.find(query).select('-password').populate('createdBy', 'name');
     res.json(users);
@@ -77,7 +77,7 @@ router.put('/:id', protect, authorize('ADMIN_OFFICER', 'HEAD'), async (req, res)
     }
 
     // Ensure they have permission
-    if (req.user.role === 'HEAD' && String(userToEdit.createdBy) !== String(req.user._id)) {
+    if (req.user.role === 'HEAD' && (userToEdit.department !== req.user.department || userToEdit.role !== 'ASSISTANT')) {
       return res.status(403).json({ message: 'Not authorized to edit this user' });
     }
     if (req.user.role === 'ADMIN_OFFICER' && userToEdit.role === 'ADMIN') {
@@ -109,7 +109,7 @@ router.delete('/:id', protect, authorize('ADMIN', 'ADMIN_OFFICER', 'HEAD'), asyn
     }
 
     // Ensure they have permission
-    if (req.user.role === 'HEAD' && String(userToDelete.createdBy) !== String(req.user._id)) {
+    if (req.user.role === 'HEAD' && (userToDelete.department !== req.user.department || userToDelete.role !== 'ASSISTANT')) {
       return res.status(403).json({ message: 'Not authorized to delete this user' });
     }
     if (req.user.role === 'ADMIN_OFFICER' && userToDelete.role === 'ADMIN') {

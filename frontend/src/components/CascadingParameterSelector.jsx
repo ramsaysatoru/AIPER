@@ -11,7 +11,8 @@ const CascadingParameterSelector = ({
   allGroupData = null, // Fix 2: Accept pre-fetched data from parent
   initialSelectedParams = [],
   initialGroupMetadata = null,
-  initialPesticidePanel = { enabled: false, panelType: null }
+  initialPesticidePanel = { enabled: false, panelType: null },
+  externalSync = null // Hybrid mode sync
 }) => {
   const [selectedGroups, setSelectedGroups] = useState(initialGroupMetadata?.group ? initialGroupMetadata.group.split(', ') : []);
   const [selectedSubGroups, setSelectedSubGroups] = useState(initialGroupMetadata?.subGroup ? initialGroupMetadata.subGroup.split(', ') : []);
@@ -28,6 +29,33 @@ const CascadingParameterSelector = ({
 
   // Global parameters state
   const [globalParameters, setGlobalParameters] = useState([]);
+
+  // Hybrid Mode One-Way Sync (Additions only)
+  useEffect(() => {
+    if (externalSync) {
+      if (externalSync.group) {
+        const extGroups = externalSync.group.split(', ').filter(Boolean);
+        setSelectedGroups(prev => {
+          const newGroups = [...prev];
+          let changed = false;
+          extGroups.forEach(g => { if (!newGroups.includes(g)) { newGroups.push(g); changed = true; } });
+          return changed ? newGroups : prev;
+        });
+      }
+      if (externalSync.subGroup) {
+        const extSubGroups = externalSync.subGroup.split(', ').filter(Boolean);
+        setSelectedSubGroups(prev => {
+          const newSubGroups = [...prev];
+          let changed = false;
+          extSubGroups.forEach(sg => { if (!newSubGroups.includes(sg)) { newSubGroups.push(sg); changed = true; } });
+          return changed ? newSubGroups : prev;
+        });
+      }
+      if (externalSync.productCategory && !selectedProductCategory) {
+        setSelectedProductCategory(externalSync.productCategory);
+      }
+    }
+  }, [externalSync]);
 
   // Fetch global parameters on mount
   useEffect(() => {

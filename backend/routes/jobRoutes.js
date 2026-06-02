@@ -331,9 +331,8 @@ router.put('/:id', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
       return res.status(400).json({ message: 'Job is complete and immutable.' });
     }
 
-    const { customer, sample, compliance } = req.body;
+    const { customer, sample, compliance, parameters, groupMetadata, pesticidePanel, sampleFlow, assignedMicroHead, assignedChemicalHead } = req.body;
 
-    // We only update customer, sample, and compliance. We don't touch parameters, distribution, or flow
     if (customer) job.customer = customer;
     if (sample) job.sample = sample;
     if (compliance) job.compliance = compliance;
@@ -344,15 +343,49 @@ router.put('/:id', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
     if (sample && sample.sample_quantity) {
       job.totalSampleVolume = parseFloat(sample.sample_quantity) || 0;
     }
-
     let isResubmitted = false;
-    if (job.distribution.micro.status === 'RETURNED') {
-      job.distribution.micro.status = 'PENDING';
+    if (req.body.isResubmitted) {
       isResubmitted = true;
     }
-    if (job.distribution.chemical.status === 'RETURNED') {
-      job.distribution.chemical.status = 'PENDING';
-      isResubmitted = true;
+
+    if (parameters) {
+      job.parameters = parameters;
+      if (groupMetadata) job.groupMetadata = groupMetadata;
+      if (pesticidePanel) job.pesticidePanel = pesticidePanel;
+
+      const hasMicro = parameters.some(p => p.type === 'Micro');
+      const hasChemical = parameters.some(p => p.type === 'Chemical') || pesticidePanel?.enabled;
+
+      // Retain existing valid statuses, default to PENDING if newly required
+      let microStatus = (job.distribution.micro?.status && job.distribution.micro.status !== 'RETURNED') ? job.distribution.micro.status : 'PENDING';
+      let chemicalStatus = (job.distribution.chemical?.status && job.distribution.chemical.status !== 'RETURNED') ? job.distribution.chemical.status : 'PENDING';
+
+      if (job.distribution.micro?.status === 'RETURNED' || job.distribution.chemical?.status === 'RETURNED') {
+        isResubmitted = true;
+      }
+
+      if (hasMicro && hasChemical) {
+        if (microStatus === 'PENDING' || microStatus === 'RETURNED' || microStatus === 'PENDING_HEAD_REVIEW' || microStatus === 'AWAITING_TRANSFER') {
+          chemicalStatus = 'AWAITING_TRANSFER';
+        } else if (microStatus === 'COMPLETED' && (chemicalStatus === 'AWAITING_TRANSFER' || chemicalStatus === 'PENDING')) {
+          chemicalStatus = 'PENDING';
+        }
+      }
+
+      job.distribution = {
+        micro: { required: hasMicro, status: hasMicro ? microStatus : 'PENDING', assignedHead: assignedMicroHead || job.distribution.micro?.assignedHead || null },
+        chemical: { required: hasChemical, status: hasChemical ? chemicalStatus : 'PENDING', assignedHead: assignedChemicalHead || job.distribution.chemical?.assignedHead || null }
+      };
+
+      if (hasMicro && hasChemical) {
+        job.sampleFlow = {
+          type: 'SEQUENTIAL',
+          firstDepartment: 'micro',
+          transferDeadline: sampleFlow?.transferDeadline || job.sampleFlow?.transferDeadline || null
+        };
+      } else {
+        job.sampleFlow = undefined;
+      }
     }
 
     job.history.push({

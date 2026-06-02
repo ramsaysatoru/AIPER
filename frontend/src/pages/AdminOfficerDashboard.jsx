@@ -699,6 +699,7 @@ function Jobs() {
       received_date_mm: j.sample?.received_date ? (new Date(j.sample.received_date).getMonth() + 1).toString().padStart(2, '0') : '',
       received_date_yyyy: j.sample?.received_date ? new Date(j.sample.received_date).getFullYear().toString() : '',
       received_mode: j.sample?.received_mode || 'Select',
+      nabl_mode: j.sample?.nabl_type === 'Nabl' ? 'nabl' : 'non_nabl',
       nabl_type: j.sample?.nabl_type || '',
       ulr_no: j.sample?.ulr_no || '',
       test_parameters: j.sample?.test_parameters || [],
@@ -1093,8 +1094,10 @@ function Jobs() {
                         { id: 'nabl', label: 'NABL', desc: 'Auto-generates ULR number' },
                         { id: 'hybrid', label: 'Hybrid', desc: 'Creates both NABL & Non-NABL jobs' }
                       ].map(mode => (
-                        <button key={mode.id} type="button" onClick={() => setField('nabl_mode', mode.id)} style={{
-                          flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'left',
+                        <button key={mode.id} type="button" onClick={() => !editingJobId && setField('nabl_mode', mode.id)} style={{
+                          flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', textAlign: 'left',
+                          cursor: editingJobId ? 'not-allowed' : 'pointer',
+                          opacity: editingJobId ? 0.6 : 1,
                           border: formData.nabl_mode === mode.id ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                           backgroundColor: formData.nabl_mode === mode.id ? 'var(--color-primary)10' : 'var(--color-surface)',
                           transition: 'all 0.15s'
@@ -1123,6 +1126,7 @@ function Jobs() {
                             initialSelectedParams={nablParams}
                             initialGroupMetadata={nablGroupMetadata}
                             initialPesticidePanel={nablPesticidePanel}
+                            externalSync={nonNablGroupMetadata}
                             onDataChange={(data) => {
                               setNablParams(data.parameters);
                               setNablGroupMetadata(data.groupMetadata);
@@ -1136,6 +1140,7 @@ function Jobs() {
                             initialSelectedParams={nonNablParams}
                             initialGroupMetadata={nonNablGroupMetadata}
                             initialPesticidePanel={nonNablPesticidePanel}
+                            externalSync={nablGroupMetadata}
                             onDataChange={(data) => {
                               setNonNablParams(data.parameters);
                               setNonNablGroupMetadata(data.groupMetadata);
