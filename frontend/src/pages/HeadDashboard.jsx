@@ -427,18 +427,18 @@ function Dispatcher() {
     };
     const updateBoth = () => { updateJobs(); updateTransfers(); };
 
-    socket.on('JOB_CREATED', updateJobs);
-    socket.on('JOB_UPDATED', updateJobs);
-    socket.on('JOB_DELETED', updateJobs);
-    socket.on('JOB_RETEST_INITIATED', updateJobs);
+    socket.on('JOB_CREATED', updateBoth);
+    socket.on('JOB_UPDATED', updateBoth);
+    socket.on('JOB_DELETED', updateBoth);
+    socket.on('JOB_RETEST_INITIATED', updateBoth);
     socket.on('TRANSFER_INITIATED', updateTransfers);
     socket.on('TRANSFER_RECEIVED', updateBoth);
 
     return () => {
-      socket.off('JOB_CREATED', updateJobs);
-      socket.off('JOB_UPDATED', updateJobs);
-      socket.off('JOB_DELETED', updateJobs);
-      socket.off('JOB_RETEST_INITIATED', updateJobs);
+      socket.off('JOB_CREATED', updateBoth);
+      socket.off('JOB_UPDATED', updateBoth);
+      socket.off('JOB_DELETED', updateBoth);
+      socket.off('JOB_RETEST_INITIATED', updateBoth);
       socket.off('TRANSFER_INITIATED', updateTransfers);
       socket.off('TRANSFER_RECEIVED', updateBoth);
     };
