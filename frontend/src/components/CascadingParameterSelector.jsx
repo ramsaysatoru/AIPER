@@ -30,6 +30,8 @@ const CascadingParameterSelector = ({
   // Global parameters state
   const [globalParameters, setGlobalParameters] = useState([]);
 
+  const getParamId = (p) => p.parameterId || p._id;
+
   // Hybrid Mode One-Way Sync (Additions only)
   useEffect(() => {
     if (externalSync) {
@@ -185,7 +187,7 @@ const CascadingParameterSelector = ({
   };
 
   const filteredSuggestions = availableParameters.filter(p => {
-    if (selectedParams.some(sp => sp._id === p._id)) return false;
+    if (selectedParams.some(sp => getParamId(sp) === getParamId(p))) return false;
     if (!searchTerm.trim()) return true;
     return p.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -245,16 +247,16 @@ const CascadingParameterSelector = ({
       await axios.delete(`${API_URL}/api/parameters/${paramId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setGlobalParameters(prev => prev.filter(p => p._id !== paramId));
-      setSelectedParams(prev => prev.filter(p => p._id !== paramId));
+      setGlobalParameters(prev => prev.filter(p => getParamId(p) !== paramId));
+      setSelectedParams(prev => prev.filter(p => getParamId(p) !== paramId));
     } catch (err) {
       alert(err.response?.data?.message || 'Error deleting parameter');
     }
   };
 
   const handleTypeChange = async (paramId, newType) => {
-    setSelectedParams(prev => prev.map(p => p._id === paramId ? { ...p, type: newType } : p));
-    setGlobalParameters(prev => prev.map(p => p._id === paramId ? { ...p, type: newType } : p));
+    setSelectedParams(prev => prev.map(p => getParamId(p) === paramId ? { ...p, type: newType } : p));
+    setGlobalParameters(prev => prev.map(p => getParamId(p) === paramId ? { ...p, type: newType } : p));
     try {
       const token = localStorage.getItem('token');
       await axios.put(`${API_URL}/api/parameters/${paramId}`, { type: newType }, {
@@ -267,23 +269,23 @@ const CascadingParameterSelector = ({
   };
 
   const addParameter = (param) => {
-    if (!selectedParams.some(sp => sp._id === param._id)) {
+    if (!selectedParams.some(sp => getParamId(sp) === getParamId(param))) {
       setSelectedParams(prev => [...prev, param]);
     }
     setSearchTerm('');
     setShowSuggestions(false);
   };
 
-  const removeParameter = (paramId) => setSelectedParams(prev => prev.filter(p => p._id !== paramId));
+  const removeParameter = (paramId) => setSelectedParams(prev => prev.filter(p => getParamId(p) !== paramId));
 
   const addAllAvailable = () => {
-    const newParams = availableParameters.filter(p => !selectedParams.some(sp => sp._id === p._id));
+    const newParams = availableParameters.filter(p => !selectedParams.some(sp => getParamId(sp) === getParamId(p)));
     setSelectedParams(prev => [...prev, ...newParams]);
   };
 
   const handleUnitChange = (paramId, newUnit) => {
     setSelectedParams(prev => prev.map(p => 
-      p._id === paramId ? { ...p, unit: newUnit } : p
+      getParamId(p) === paramId ? { ...p, unit: newUnit } : p
     ));
   };
 
@@ -477,7 +479,7 @@ const CascadingParameterSelector = ({
               }}>
                 {filteredSuggestions.map((p, index) => (
                   <div
-                    key={p._id}
+                    key={getParamId(p)}
                     onClick={() => addParameter(p)}
                     onMouseEnter={() => setActiveIndex(index)}
                     style={{
@@ -549,12 +551,12 @@ const CascadingParameterSelector = ({
                 </thead>
                 <tbody>
                   {selectedParams.map((p) => (
-                    <tr key={p._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <tr key={getParamId(p)} style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <td style={{ padding: '0.4rem 0.5rem' }}>{p.name}</td>
                       <td style={{ padding: '0.4rem 0.5rem' }}>
                         <select 
                           value={p.type} 
-                          onChange={(e) => handleTypeChange(p._id, e.target.value)}
+                          onChange={(e) => handleTypeChange(getParamId(p), e.target.value)}
                           style={{ fontSize: '0.75rem', padding: '0.2rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
                         >
                           <option value="Micro">Micro</option>
@@ -566,8 +568,8 @@ const CascadingParameterSelector = ({
                           <input
                             type="text"
                             value={p.unit}
-                            onChange={(e) => handleUnitChange(p._id, e.target.value)}
-                            onBlur={() => handleSaveUnit(p._id, p.unit)}
+                            onChange={(e) => handleUnitChange(getParamId(p), e.target.value)}
+                            onBlur={() => handleSaveUnit(getParamId(p), p.unit)}
                             style={{ 
                               width: '80px', padding: '0.25rem', fontSize: '0.8rem',
                               border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)'
@@ -580,7 +582,7 @@ const CascadingParameterSelector = ({
                         <div style={{ display: 'flex', gap: '0.2rem', justifyContent: 'center' }}>
                           <button
                             type="button"
-                            onClick={() => removeParameter(p._id)}
+                            onClick={() => removeParameter(getParamId(p))}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '0.35rem', display: 'flex' }}
                             title="Remove from current job selection"
                           >
@@ -588,7 +590,7 @@ const CascadingParameterSelector = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDeleteParameter(p._id)}
+                            onClick={() => handleDeleteParameter(getParamId(p))}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: '0.35rem', display: 'flex' }}
                             title="Delete permanently from database"
                           >

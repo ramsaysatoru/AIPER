@@ -370,6 +370,9 @@ router.put('/:id', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
         } else if (microStatus === 'COMPLETED' && (chemicalStatus === 'AWAITING_TRANSFER' || chemicalStatus === 'PENDING')) {
           chemicalStatus = 'PENDING';
         }
+      } else if (!hasMicro && hasChemical && chemicalStatus === 'AWAITING_TRANSFER') {
+        // If micro is no longer required, chemical shouldn't wait for transfer
+        chemicalStatus = 'PENDING';
       }
 
       job.distribution = {

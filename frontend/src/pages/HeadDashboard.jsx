@@ -6,6 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 
 import JobLogTable from '../components/JobLogTable';
+import JobDetailsModal from '../components/JobDetailsModal';
 import { fetchWithCache, invalidateCache, CACHE_KEYS } from '../utils/cache';
 import Spinner from '../components/Spinner';
 import { useSocket } from '../context/SocketContext';
@@ -382,6 +383,7 @@ function Dispatcher() {
   const [returnModalData, setReturnModalData] = useState(null); // { jobId: string, dept: string }
   const [returnNote, setReturnNote] = useState('');
   const [isReturning, setIsReturning] = useState(false);
+  const [detailsJob, setDetailsJob] = useState(null);
 
   // Sample transfer state
   const [incomingTransfers, setIncomingTransfers] = useState([]);
@@ -776,6 +778,14 @@ function Dispatcher() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setDetailsJob(job); }} 
+                      className="btn btn-secondary" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      title="View all customer, sample, and compliance details"
+                    >
+                      <ClipboardCheck size={14} /> View Details
+                    </button>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                         {new Date(job.createdAt).toLocaleDateString('en-IN')}
@@ -977,6 +987,9 @@ function Dispatcher() {
           </div>
         </div>
       )}
+      
+      {/* View Job Details Modal */}
+      {detailsJob && <JobDetailsModal job={detailsJob} onClose={() => setDetailsJob(null)} />}
     </div>
   );
 }
