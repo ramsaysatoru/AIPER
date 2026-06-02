@@ -400,7 +400,7 @@ router.put('/:id', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
         job.sampleFlow = undefined;
       }
 
-      if (!hasMicro || !hasChemical || (isResubmitted && !transferCompleted)) {
+      if (isResubmitted && !transferCompleted) {
         await SampleTransfer.deleteMany({ jobId: job._id });
         if (req.app.get('io')) {
           req.app.get('io').emit('TRANSFER_INITIATED');
