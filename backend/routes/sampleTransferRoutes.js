@@ -159,10 +159,15 @@ router.put('/:id/receive', protect, authorize('HEAD'), async (req, res) => {
     transfer.status = 'RECEIVED';
     await transfer.save();
 
-    // Unlock the receiving department's distribution: AWAITING_TRANSFER → PENDING
+    // Unlock the receiving department's distribution: AWAITING_TRANSFER → PENDING (or PENDING_REVIEW)
     const job = await Job.findById(transfer.jobId);
-    if (job && job.distribution[myDept]) {
-      job.distribution[myDept].status = 'PENDING';
+    if (job) {
+      if (job.distribution.micro.required && job.distribution.chemical.required) {
+        job.distribution.micro.status = 'PENDING_REVIEW';
+        job.distribution.chemical.status = 'PENDING_REVIEW';
+      } else if (job.distribution[myDept]) {
+        job.distribution[myDept].status = 'PENDING';
+      }
       await job.save();
     }
 

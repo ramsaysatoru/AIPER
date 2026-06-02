@@ -401,7 +401,7 @@ function Dispatcher() {
         const dKey = dept === 'chemical' ? 'chemical' : dept;
         const dist = j.distribution[dKey];
         const headId = dist?.assignedHead?._id || dist?.assignedHead;
-        return dist?.status === 'PENDING' && (!headId || headId === user._id);
+        return ['PENDING', 'PENDING_REVIEW', 'REVIEW_APPROVED'].includes(dist?.status) && (!headId || headId === user._id);
       }))
     ).catch(console.error).finally(() => setDispatchLoading(false));
   };
@@ -809,7 +809,80 @@ function Dispatcher() {
                     {deptParams.length === 0 ? (
                       <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem' }}>No parameters for your department in this job.</p>
                     ) : (
-                      <>
+                      (() => {
+                        const dKey = dept === 'chemical' ? 'chemical' : dept;
+                        const otherKey = dKey === 'chemical' ? 'micro' : 'chemical';
+                        const distStatus = job.distribution[dKey].status;
+                        const isMultiDept = job.distribution.micro.required && job.distribution.chemical.required;
+                        const isAwaitingTransfer = isMultiDept && job.distribution.chemical.status === 'AWAITING_TRANSFER';
+                        
+                        if (dKey === 'micro' && isAwaitingTransfer) {
+                          return (
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>
+                              <h3 style={{ color: 'var(--color-primary)' }}>Hand Over Sample to Unlock</h3>
+                              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>You must transfer the physical sample to the Chemical department before joint review can begin.</p>
+                            </div>
+                          );
+                        }
+
+                        if (distStatus === 'PENDING_REVIEW') {
+                          return (
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>
+                              <h3 style={{ color: 'var(--color-warning)' }}>Joint Review Phase</h3>
+                              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Please review the job details and parameters. You must approve the job before analysts can be assigned.</p>
+                              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                                <button 
+                                  onClick={async () => {
+                                    try {
+                                      await axios.put(`${API_URL}/api/jobs/${job._id}/approve-review`, {}, {
+                                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                      });
+                                      invalidateCache(CACHE_KEYS.JOBS);
+                                      fetchJobs();
+                                    } catch (err) { alert(err.response?.data?.message || 'Error approving job'); }
+                                  }}
+                                  className="btn btn-success"
+                                  style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                  <ClipboardCheck size={18} /> Approve Job
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    setReturnModalData({ jobId: job._id, dept: dKey });
+                                    setReturnNote('');
+                                  }}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB' }}
+                                >
+                                  <RotateCcw size={18} /> Return Job
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (distStatus === 'REVIEW_APPROVED') {
+                          return (
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>
+                              <h3 style={{ color: 'var(--color-success)' }}>Approved by {dKey === 'micro' ? 'Micro' : 'Chemical'}</h3>
+                              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Waiting for the {otherKey === 'micro' ? 'Micro' : 'Chemical'} department to approve their details before analysts can be assigned.</p>
+                               <button 
+                                  onClick={() => {
+                                    setReturnModalData({ jobId: job._id, dept: dKey });
+                                    setReturnNote('');
+                                  }}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB', margin: '0 auto' }}
+                                >
+                                  <RotateCcw size={18} /> Return Job
+                                </button>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <>
+
                         {/* Bulk assign */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                           <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Assign Analysts to Parameters ({deptParams.length})</h4>
@@ -907,6 +980,8 @@ function Dispatcher() {
                           </div>
                         </div>
                       </>
+                        );
+                      })()
                     )}
                   </div>
                 )}

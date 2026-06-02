@@ -411,6 +411,46 @@ router.put('/:id', protect, authorize('ADMIN_OFFICER'), async (req, res) => {
 });
 
 // Return Job to Officer (HEAD only)
+// PUT — Head approves the job during joint review
+router.put('/:id/approve-review', protect, authorize('HEAD'), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+
+    const dept = req.user.department ? req.user.department.toLowerCase() : '';
+    const myDept = (dept === 'chemical') ? 'chemical' : 'micro';
+    const otherDept = myDept === 'micro' ? 'chemical' : 'micro';
+
+    if (!job.distribution[myDept] || job.distribution[myDept].status !== 'PENDING_REVIEW') {
+      return res.status(400).json({ message: 'Job is not pending your review' });
+    }
+
+    job.distribution[myDept].status = 'REVIEW_APPROVED';
+
+    // If both are approved, unlock them to PENDING
+    if (job.distribution[otherDept].status === 'REVIEW_APPROVED' || !job.distribution[otherDept].required) {
+      job.distribution.micro.status = 'PENDING';
+      job.distribution.chemical.status = 'PENDING';
+    }
+
+    job.history.push({
+      action: 'REVIEW_APPROVED',
+      by: req.user._id,
+      note: `${myDept.toUpperCase()} HEAD approved job details.`
+    });
+
+    await job.save();
+
+    if (req.app.get('io')) {
+      req.app.get('io').emit('JOB_UPDATED');
+    }
+
+    res.json(job);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
 router.post('/:id/return', protect, authorize('HEAD'), async (req, res) => {
   try {
     const { department, note } = req.body; // 'micro' or 'chemical'
@@ -425,11 +465,20 @@ router.post('/:id/return', protect, authorize('HEAD'), async (req, res) => {
       return res.status(400).json({ message: 'Invalid department' });
     }
 
-    if (job.distribution[department].status !== 'PENDING') {
-      return res.status(400).json({ message: 'Job is not pending dispatch' });
+    if (!['PENDING', 'PENDING_REVIEW', 'REVIEW_APPROVED'].includes(job.distribution[department].status)) {
+      return res.status(400).json({ message: 'Job cannot be returned at this stage' });
     }
 
     job.distribution[department].status = 'RETURNED';
+
+    // If it's a multi-department job in the joint review phase, force both to RETURNED
+    if (job.distribution.micro.required && job.distribution.chemical.required) {
+      if (['PENDING_REVIEW', 'REVIEW_APPROVED', 'RETURNED'].includes(job.distribution.micro.status) || 
+          ['PENDING_REVIEW', 'REVIEW_APPROVED', 'RETURNED'].includes(job.distribution.chemical.status)) {
+        job.distribution.micro.status = 'RETURNED';
+        job.distribution.chemical.status = 'RETURNED';
+      }
+    }
     
     job.history.push({
       action: 'RETURNED_TO_OFFICER',
