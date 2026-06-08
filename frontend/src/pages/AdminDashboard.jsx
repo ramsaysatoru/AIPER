@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Trash2, Edit, FileText, Search, ChevronDown, ChevronRight, Activity, Users as UsersIcon, Settings, Clock, CheckCircle } from 'lucide-react';
+import { Trash2, Edit, FileText, Search, ChevronDown, ChevronRight, Activity, Users as UsersIcon, Settings, Clock, CheckCircle, X } from 'lucide-react';
 
 import JobLogTable from '../components/JobLogTable';
 import { AuthContext } from '../context/AuthContext';
@@ -318,6 +318,11 @@ function UsersPage() {
       setShowForm(false);
       invalidateCache(CACHE_KEYS.USERS);
       fetchUsers();
+      
+      // Auto-dismiss after 15 seconds so they have time to copy the password
+      setTimeout(() => {
+        setSuccess('');
+      }, 15000);
     } catch (err) {
       setError(err.response?.data?.message || 'Operation failed');
     }
@@ -329,6 +334,10 @@ function UsersPage() {
       setSuccess('User successfully removed');
       invalidateCache(CACHE_KEYS.USERS);
       fetchUsers();
+      
+      setTimeout(() => {
+        setSuccess('');
+      }, 5000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete user');
     }
@@ -354,11 +363,20 @@ function UsersPage() {
           color: 'white', backgroundColor: 'var(--color-success)',
           padding: '1rem 1.5rem', borderRadius: 'var(--radius-md)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          display: 'flex', alignItems: 'center', gap: '0.75rem',
+          display: 'flex', alignItems: 'center', gap: '1rem',
           animation: 'slideIn 0.3s ease-out'
         }}>
-          <CheckCircle size={20} />
-          <span style={{ fontWeight: 500 }}>{success}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <CheckCircle size={20} />
+            <span style={{ fontWeight: 500 }}>{success}</span>
+          </div>
+          <button 
+            onClick={() => setSuccess('')} 
+            style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', padding: '0.2rem', display: 'flex' }}
+            title="Dismiss"
+          >
+            <X size={18} />
+          </button>
         </div>
       )}
 

@@ -64,6 +64,8 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
     return code.replace(/-N[12]([a-z]?)(?:-v\d+)?$/g, '-N$1').replace(/-[12][a-z]?(?:-v\d+)?$/g, '');
   };
 
+  const showActions = !!onDeleteJob || !!onEditJob || jobs.some(j => j.history && j.history.length > 0);
+
   return (
     <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
       <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface)' }}>
@@ -104,12 +106,12 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
             <th>Client Name</th>
             <th>Date Created</th>
             <th>Overall Status</th>
-            {onDeleteJob && <th style={{ textAlign: 'right' }}>Actions</th>}
+            {showActions && <th style={{ textAlign: 'right' }}>Actions</th>}
           </tr>
         </thead>
         <tbody>
           {filteredJobs.length === 0 ? (
-            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No jobs match your filters.</td></tr>
+            <tr><td colSpan={showActions ? 6 : 5} style={{ textAlign: 'center', padding: '2rem' }}>No jobs match your filters.</td></tr>
           ) : (
             filteredJobs.map(job => (
               <React.Fragment key={job._id}>
@@ -121,15 +123,17 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
                   <td style={{ fontWeight: 500 }}>{job.clientName}</td>
                   <td>{new Date(job.createdAt).toLocaleDateString('en-IN')}</td>
                   <td><StatusBadge status={getJobStatus(job)} /></td>
-                  {(onDeleteJob || onEditJob || job.history?.length > 0) && (
+                  {showActions && (
                     <td style={{ textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setHistoryJob(job); }}
-                        style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
-                        title="View Job History"
-                      >
-                        <Clock size={16} />
-                      </button>
+                      {job.history?.length > 0 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setHistoryJob(job); }}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
+                          title="View Job History"
+                        >
+                          <Clock size={16} />
+                        </button>
+                      )}
                       {onEditJob && getJobStatus(job) !== 'COMPLETED' && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onEditJob(job); }}
@@ -153,7 +157,7 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
                 </tr>
                 {expandedJobId === job._id && (
                   <tr>
-                    <td colSpan="6" style={{ padding: '0', backgroundColor: 'var(--color-surface-hover)' }}>
+                    <td colSpan={showActions ? 6 : 5} style={{ padding: '0', backgroundColor: 'var(--color-surface-hover)' }}>
                       <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
                         <JobTimeline job={job} allJobs={jobs} onReopen={onReopen} />
                       </div>
