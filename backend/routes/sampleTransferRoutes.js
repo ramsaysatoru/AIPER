@@ -30,8 +30,13 @@ router.get('/incoming', protect, authorize('HEAD'), async (req, res) => {
     
     const transfers = await SampleTransfer.find({ toDepartment: toDept, status: 'SENT' })
       .populate('sentBy', 'name department')
-      .populate('jobId', 'jobCode clientName')
-      .sort({ sentAt: -1 });
+      .sort({ sentAt: -1 })
+      .lean();
+      
+    // Attach a representative job for UI display
+    for (const t of transfers) {
+      t.jobId = await Job.findOne({ sampleSerial: t.sampleSerial }, 'jobCode clientName');
+    }
     res.json(transfers);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching incoming transfers', error: err.message });
@@ -44,19 +49,26 @@ router.get('/outgoing', protect, authorize('HEAD'), async (req, res) => {
     const dept = req.user.department ? req.user.department.toLowerCase() : '';
     const fromDept = (dept === 'chemical') ? 'chemical' : 'micro';
     
-    // Find jobs where this dept is first, no transfer sent yet, and not returned
+    // Find multi-department jobs where this dept is not RETURNED
     const jobs = await Job.find({
-      'sampleFlow.type': 'SEQUENTIAL',
-      'sampleFlow.firstDepartment': fromDept,
+      'distribution.micro.required': true,
+      'distribution.chemical.required': true,
       [`distribution.${fromDept}.status`]: { $ne: 'RETURNED' }
     });
 
-    // Filter out jobs that already have a transfer record
-    const jobIds = jobs.map(j => j._id);
-    const existingTransfers = await SampleTransfer.find({ jobId: { $in: jobIds } });
-    const transferredJobIds = new Set(existingTransfers.map(t => t.jobId.toString()));
+    const uniqueSerials = [...new Set(jobs.map(j => j.sampleSerial))];
+    const existingTransfers = await SampleTransfer.find({ sampleSerial: { $in: uniqueSerials } });
+    const transferredSerials = new Set(existingTransfers.map(t => t.sampleSerial));
     
-    const pendingJobs = jobs.filter(j => !transferredJobIds.has(j._id.toString()));
+    const pendingJobs = [];
+    const seenSerials = new Set();
+    
+    for (const j of jobs) {
+      if (!transferredSerials.has(j.sampleSerial) && !seenSerials.has(j.sampleSerial)) {
+        pendingJobs.push(j);
+        seenSerials.add(j.sampleSerial);
+      }
+    }
     
     res.json(pendingJobs);
   } catch (err) {
@@ -71,27 +83,22 @@ router.post('/', protect, authorize('HEAD'), async (req, res) => {
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
-    if (job.sampleFlow?.type !== 'SEQUENTIAL') {
-      return res.status(400).json({ message: 'This job uses parallel flow — no transfer needed' });
+    if (!job.distribution.micro.required || !job.distribution.chemical.required) {
+      return res.status(400).json({ message: 'This job is not a multi-department job — no transfer needed' });
     }
 
     const dept = req.user.department ? req.user.department.toLowerCase() : '';
     const fromDept = (dept === 'chemical') ? 'chemical' : 'micro';
     const toDept = fromDept === 'micro' ? 'chemical' : 'micro';
 
-    // Validate sender's department is the first
-    if (job.sampleFlow.firstDepartment !== fromDept) {
-      return res.status(400).json({ message: 'Your department is not the first in the sequential flow' });
-    }
-
     // Check no existing transfer
-    const existing = await SampleTransfer.findOne({ jobId });
+    const existing = await SampleTransfer.findOne({ sampleSerial: job.sampleSerial });
     if (existing) {
-      return res.status(400).json({ message: 'A transfer has already been initiated for this job' });
+      return res.status(400).json({ message: 'A transfer has already been initiated for this sample' });
     }
 
     const transfer = await SampleTransfer.create({
-      jobId,
+      sampleSerial: job.sampleSerial,
       fromDepartment: fromDept,
       toDepartment: toDept,
       sentBy: req.user._id,
@@ -106,8 +113,8 @@ router.post('/', protect, authorize('HEAD'), async (req, res) => {
         recipient: head._id,
         type: 'ACTION_REQUIRED',
         title: 'Sample Transfer — Action Required',
-        message: `${fromDept.toUpperCase()} dept has taken their portion and sent the sample for job ${job.jobCode}. Please confirm receipt.`,
-        relatedJobId: jobId,
+        message: `${fromDept.toUpperCase()} dept has taken their portion and sent the sample. Please confirm receipt.`,
+        relatedJobId: jobId, // arbitrary sibling job id is fine for UI linking
         link: '/head/dispatcher'
       });
     }
@@ -118,13 +125,13 @@ router.post('/', protect, authorize('HEAD'), async (req, res) => {
     await notifyAdminOfficers({
       type: 'INFO',
       title: 'Sample Transferred',
-      message: `Sample for job ${job.jobCode} has been sent from ${fromLabel} to ${toLabel} department by ${req.user.name}.`,
+      message: `Sample #${job.sampleSerial} has been sent from ${fromLabel} to ${toLabel} department by ${req.user.name}.`,
       relatedJobId: jobId
     });
     await notifyAdmins({
       type: 'INFO',
       title: 'Sample Transferred',
-      message: `Sample for job ${job.jobCode} has been sent from ${fromLabel} to ${toLabel} department.`,
+      message: `Sample #${job.sampleSerial} has been sent from ${fromLabel} to ${toLabel} department.`,
       relatedJobId: jobId
     });
 
@@ -159,17 +166,7 @@ router.put('/:id/receive', protect, authorize('HEAD'), async (req, res) => {
     transfer.status = 'RECEIVED';
     await transfer.save();
 
-    // Unlock the receiving department's distribution: AWAITING_TRANSFER → PENDING (or PENDING_REVIEW)
-    const job = await Job.findById(transfer.jobId);
-    if (job) {
-      if (job.distribution.micro.required && job.distribution.chemical.required) {
-        job.distribution.micro.status = 'PENDING_REVIEW';
-        job.distribution.chemical.status = 'PENDING_REVIEW';
-      } else if (job.distribution[myDept]) {
-        job.distribution[myDept].status = 'PENDING';
-      }
-      await job.save();
-    }
+    const job = await Job.findOne({ sampleSerial: transfer.sampleSerial });
 
     // Notify everyone
     const fromLabel = transfer.fromDepartment === 'chemical' ? 'Chemical' : 'Micro';
@@ -178,14 +175,14 @@ router.put('/:id/receive', protect, authorize('HEAD'), async (req, res) => {
     await notifyAdminOfficers({
       type: 'SUCCESS',
       title: 'Sample Received',
-      message: `${toLabel} HEAD (${req.user.name}) has confirmed receipt of sample for job ${job.jobCode}.`,
-      relatedJobId: transfer.jobId
+      message: `${toLabel} HEAD (${req.user.name}) has confirmed receipt of sample #${transfer.sampleSerial}.`,
+      relatedJobId: job?._id
     });
     await notifyAdmins({
       type: 'SUCCESS',
       title: 'Sample Received',
-      message: `${toLabel} dept confirmed receipt of sample for job ${job.jobCode} from ${fromLabel} dept.`,
-      relatedJobId: transfer.jobId
+      message: `${toLabel} dept confirmed receipt of sample #${transfer.sampleSerial} from ${fromLabel} dept.`,
+      relatedJobId: job?._id
     });
 
     // Notify the Head who originally sent the sample
@@ -193,8 +190,8 @@ router.put('/:id/receive', protect, authorize('HEAD'), async (req, res) => {
       recipient: transfer.sentBy,
       type: 'SUCCESS',
       title: 'Transfer Receipt Confirmed',
-      message: `${toLabel} department has received your sample transfer for job ${job.jobCode}.`,
-      relatedJobId: transfer.jobId,
+      message: `${toLabel} department has received your sample transfer for sample #${transfer.sampleSerial}.`,
+      relatedJobId: job?._id,
       link: '/head/dispatcher'
     });
 

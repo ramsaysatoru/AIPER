@@ -67,7 +67,7 @@ const jobSchema = new mongoose.Schema({
     micro: {
       required: { type: Boolean, default: false },
       assignedHead: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      status: { type: String, enum: ['PENDING', 'PENDING_REVIEW', 'REVIEW_APPROVED', 'AWAITING_TRANSFER', 'ASSIGNED_TO_ASSISTANT', 'RETURNED', 'COMPLETED'], default: 'PENDING' },
+      status: { type: String, enum: ['PENDING', 'PENDING_REVIEW', 'REVIEW_APPROVED', 'ASSIGNED_TO_ASSISTANT', 'RETURNED', 'COMPLETED'], default: 'PENDING' },
       reopenInfo: {
         parentInstanceId: { type: mongoose.Schema.Types.ObjectId, ref: 'TestInstance' },
         parentVersion: { type: Number },
@@ -77,7 +77,7 @@ const jobSchema = new mongoose.Schema({
     chemical: {
       required: { type: Boolean, default: false },
       assignedHead: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      status: { type: String, enum: ['PENDING', 'PENDING_REVIEW', 'REVIEW_APPROVED', 'AWAITING_TRANSFER', 'ASSIGNED_TO_ASSISTANT', 'RETURNED', 'COMPLETED'], default: 'PENDING' },
+      status: { type: String, enum: ['PENDING', 'PENDING_REVIEW', 'REVIEW_APPROVED', 'ASSIGNED_TO_ASSISTANT', 'RETURNED', 'COMPLETED'], default: 'PENDING' },
       reopenInfo: {
         parentInstanceId: { type: mongoose.Schema.Types.ObjectId, ref: 'TestInstance' },
         parentVersion: { type: Number },

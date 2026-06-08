@@ -671,7 +671,7 @@ function Dispatcher() {
                     📦 Sample from {transfer.fromDepartment === 'micro' ? 'Micro' : 'Chemical'} Department
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                    Job: <strong>{formatJobCode(transfer.jobId?.jobCode) || 'N/A'}</strong>
+                    Sample Serial: <strong>#{transfer.sampleSerial}</strong>
                     {transfer.jobId?.clientName && ` — ${transfer.jobId.clientName}`}
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
@@ -700,7 +700,7 @@ function Dispatcher() {
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {outgoingJobs.map(job => {
-              const secondDept = job.sampleFlow?.firstDepartment === 'micro' ? 'Chemical' : 'Micro';
+              const secondDept = user?.department?.toLowerCase() === 'micro' ? 'Chemical' : 'Micro';
               return (
                 <div key={job._id} className="card" style={{
                   padding: '1.25rem 1.5rem',
@@ -713,15 +713,10 @@ function Dispatcher() {
                       🔄 Hand Over to {secondDept} Department
                     </div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                      Job: <strong>{formatJobCode(job.jobCode)}</strong> — {job.clientName || 'N/A'}
+                      Sample Serial: <strong>#{job.sampleSerial}</strong> {job.clientName ? `— ${job.clientName}` : ''}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
                       Please hand over the sample to the {secondDept} department once you have taken your required portion.
-                      {job.sampleFlow?.transferDeadline && (
-                        <span style={{ color: new Date(job.sampleFlow.transferDeadline) < new Date() ? 'var(--color-danger)' : 'var(--color-warning)', fontWeight: 600 }}>
-                          {' '}· Deadline: {new Date(job.sampleFlow.transferDeadline).toLocaleString()}
-                        </span>
-                      )}
                     </div>
                   </div>
                   <button
@@ -819,16 +814,6 @@ function Dispatcher() {
                         const otherKey = dKey === 'chemical' ? 'micro' : 'chemical';
                         const distStatus = job.distribution[dKey].status;
                         const isMultiDept = job.distribution.micro.required && job.distribution.chemical.required;
-                        const isAwaitingTransfer = isMultiDept && job.distribution.chemical.status === 'AWAITING_TRANSFER';
-                        
-                        if (dKey === 'micro' && isAwaitingTransfer) {
-                          return (
-                            <div style={{ textAlign: 'center', padding: '2rem' }}>
-                              <h3 style={{ color: 'var(--color-primary)' }}>Hand Over Sample to Unlock</h3>
-                              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>You must transfer the physical sample to the Chemical department before joint review can begin.</p>
-                            </div>
-                          );
-                        }
 
                         if (distStatus === 'PENDING_REVIEW') {
                           return (

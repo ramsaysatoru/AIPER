@@ -298,32 +298,6 @@ router.put('/instances/:id/review', protect, authorize('HEAD'), async (req, res)
         }
         await job.save({ validateBeforeSave: false });
 
-        // ── Sequential flow: notify first dept HEAD to hand over sample ──
-        if (job.sampleFlow?.type === 'SEQUENTIAL') {
-          const firstDept = job.sampleFlow.firstDepartment; // 'micro' or 'chemical'
-          const secondDept = firstDept === 'micro' ? 'chemical' : 'micro';
-
-          // Check if the first department just completed
-          if (job.distribution[firstDept]?.status === 'COMPLETED' && 
-              job.distribution[secondDept]?.status === 'AWAITING_TRANSFER') {
-            
-            const firstDeptLabel = firstDept === 'chemical' ? 'Chemical' : 'Micro';
-            const secondDeptLabel = secondDept === 'chemical' ? 'Chemical' : 'Micro';
-            const deptRegex = firstDept === 'micro' ? /^micro$/i : /^(chemical|chemical)$/i;
-            
-            const firstDeptHeads = await User.find({ role: 'HEAD', department: { $regex: deptRegex } });
-            for (const head of firstDeptHeads) {
-              await createNotification({
-                recipient: head._id,
-                type: 'ACTION_REQUIRED',
-                title: 'Sample Hand-Over Reminder',
-                message: `Reminder: You have not yet transferred the physical sample for job ${job.jobCode}. Please hand it over to the ${secondDeptLabel} department.`,
-                relatedJobId: job._id,
-                link: '/head/dispatcher'
-              });
-            }
-          }
-        }
       }
 
       await notifyAdminOfficers({
