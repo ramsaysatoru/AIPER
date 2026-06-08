@@ -815,161 +815,166 @@ function Dispatcher() {
                         const distStatus = job.distribution[dKey].status;
                         const isMultiDept = job.distribution.micro.required && job.distribution.chemical.required;
 
-                        if (distStatus === 'PENDING_REVIEW') {
-                          return (
-                            <div style={{ textAlign: 'center', padding: '2rem' }}>
-                              <h3 style={{ color: 'var(--color-warning)' }}>Joint Review Phase</h3>
-                              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Please review the job details and parameters. You must approve the job before analysts can be assigned.</p>
-                              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                                <button 
-                                  onClick={async () => {
-                                    try {
-                                      await axios.put(`${API_URL}/api/jobs/${job._id}/approve-review`, {}, {
-                                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                                      });
-                                      invalidateCache(CACHE_KEYS.JOBS);
-                                      fetchJobs();
-                                    } catch (err) { alert(err.response?.data?.message || 'Error approving job'); }
-                                  }}
-                                  className="btn btn-success"
-                                  style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                >
-                                  <ClipboardCheck size={18} /> Approve Job
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    setReturnModalData({ jobId: job._id, dept: dKey });
-                                    setReturnNote('');
-                                  }}
-                                  className="btn btn-secondary"
-                                  style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB' }}
-                                >
-                                  <RotateCcw size={18} /> Return Job
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        if (distStatus === 'REVIEW_APPROVED') {
-                          return (
-                            <div style={{ textAlign: 'center', padding: '2rem' }}>
-                              <h3 style={{ color: 'var(--color-success)' }}>Approved by {dKey === 'micro' ? 'Micro' : 'Chemical'}</h3>
-                              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Waiting for the {otherKey === 'micro' ? 'Micro' : 'Chemical'} department to approve their details before analysts can be assigned.</p>
-                               <button 
-                                  onClick={() => {
-                                    setReturnModalData({ jobId: job._id, dept: dKey });
-                                    setReturnNote('');
-                                  }}
-                                  className="btn btn-secondary"
-                                  style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB', margin: '0 auto' }}
-                                >
-                                  <RotateCcw size={18} /> Return Job
-                                </button>
-                            </div>
-                          );
-                        }
+                        const isReviewing = distStatus === 'PENDING_REVIEW';
+                        const isApproved = distStatus === 'REVIEW_APPROVED';
+                        const isPending = distStatus === 'PENDING';
 
                         return (
                           <>
-
-                        {/* Bulk assign */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                          <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Assign Analysts to Parameters ({deptParams.length})</h4>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Bulk assign all to:</label>
-                            <select
-                              onChange={e => { handleAssignAll(job._id, e.target.value, deptParams); e.target.value = ''; }}
-                              defaultValue=""
-                              style={{ minWidth: '150px' }}
-                            >
-                              <option value="" disabled>Select analyst...</option>
-                              {assistants.map(ast => <option key={ast._id} value={ast._id}>{ast.name}</option>)}
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Parameter rows */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                          {deptParams.map(p => (
-                            <div key={p.parameterId._id} style={{
-                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                              backgroundColor: 'var(--color-surface-hover)', padding: '0.6rem 1rem',
-                              borderRadius: 'var(--radius-md)', gap: '1rem'
-                            }}>
-                              <div style={{ flex: 1 }}>
-                                <span style={{ fontWeight: 600 }}>{p.name}</span>{' '}
-                                <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({p.unit})</span>
-                              </div>
-                              <select
-                                value={assignments[`${job._id}-${p.parameterId._id}`] || ''}
-                                onChange={e => handleAssign(job._id, p.parameterId._id, e.target.value)}
-                                required
-                                style={{ minWidth: '180px' }}
-                              >
-                                <option value="" disabled>Select Analyst...</option>
-                                {assistants.map(ast => <option key={ast._id} value={ast._id}>{ast.name}</option>)}
-                              </select>
+                            {/* Parameter rows (Always visible) */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                              {deptParams.map(p => (
+                                <div key={p.parameterId._id} style={{
+                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                  backgroundColor: 'var(--color-surface-hover)', padding: '0.6rem 1rem',
+                                  borderRadius: 'var(--radius-md)', gap: '1rem'
+                                }}>
+                                  <div style={{ flex: 1 }}>
+                                    <span style={{ fontWeight: 600 }}>{p.name}</span>{' '}
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({p.unit})</span>
+                                  </div>
+                                  
+                                  {isPending && (
+                                    <select
+                                      value={assignments[`${job._id}-${p.parameterId._id}`] || ''}
+                                      onChange={e => handleAssign(job._id, p.parameterId._id, e.target.value)}
+                                      required
+                                      style={{ minWidth: '180px' }}
+                                    >
+                                      <option value="" disabled>Select Analyst...</option>
+                                      {assistants.map(ast => <option key={ast._id} value={ast._id}>{ast.name}</option>)}
+                                    </select>
+                                  )}
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
 
-                        {/* Deadline + Submit */}
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                          <div style={{ flex: '1 1 180px' }}>
-                            <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.4rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>Deadline Date <span style={{color:'var(--color-danger)'}}>*</span></label>
-                            <input
-                              type="date"
-                              value={deadlineDates[job._id] || ''}
-                              onChange={e => {
-                                setDeadlineDates(prev => ({ ...prev, [job._id]: e.target.value }));
-                                setDeadlineTimes(prev => {
-                                  if (!prev[job._id] && e.target.value) {
-                                    return { ...prev, [job._id]: '17:00' };
-                                  }
-                                  return prev;
-                                });
-                              }}
-                              required
-                              style={{ width: '100%' }}
-                            />
-                          </div>
-                          <div style={{ flex: '1 1 130px' }}>
-                            <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.4rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>Due Time <span style={{color:'var(--color-danger)'}}>*</span></label>
-                            <input
-                              type="time"
-                              value={deadlineTimes[job._id] || ''}
-                              onChange={e => setDeadlineTimes(prev => ({ ...prev, [job._id]: e.target.value }))}
-                              required
-                              style={{ width: '100%' }}
-                            />
-                          </div>
-                          <div style={{ flex: '0 0 auto', display: 'flex', gap: '0.5rem' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const dept = user?.department ? user.department.toLowerCase() : '';
-                                const dKey = dept === 'chemical' ? 'chemical' : dept;
-                                setReturnModalData({ jobId: job._id, dept: dKey });
-                                setReturnNote('');
-                              }}
-                              className="btn btn-secondary"
-                              style={{ padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB' }}
-                            >
-                              <RotateCcw size={16} /> Return
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSubmit(job)}
-                              className="btn btn-primary"
-                              disabled={submittingJobId === job._id}
-                              style={{ padding: '0.6rem 1.5rem', justifyContent: 'center' }}
-                            >
-                              {submittingJobId === job._id ? <Spinner size="sm" message="Dispatching..." color="#fff" /> : 'Dispatch Job'}
-                            </button>
-                          </div>
-                        </div>
-                      </>
+                            {/* Action Blocks based on Status */}
+                            {isReviewing && (
+                              <div style={{ textAlign: 'center', padding: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
+                                <h3 style={{ color: 'var(--color-warning)', marginBottom: '0.5rem', fontSize: '1.2rem' }}>Joint Review Phase</h3>
+                                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Please review the job details and parameters above. You must approve the job before analysts can be assigned.</p>
+                                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                                  <button 
+                                    onClick={async () => {
+                                      try {
+                                        await axios.put(`${API_URL}/api/jobs/${job._id}/approve-review`, {}, {
+                                          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                        });
+                                        invalidateCache(CACHE_KEYS.JOBS);
+                                        fetchJobs();
+                                      } catch (err) { alert(err.response?.data?.message || 'Error approving job'); }
+                                    }}
+                                    className="btn btn-success"
+                                    style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                  >
+                                    <ClipboardCheck size={18} /> Approve Job
+                                  </button>
+                                  <button 
+                                    onClick={() => {
+                                      setReturnModalData({ jobId: job._id, dept: dKey });
+                                      setReturnNote('');
+                                    }}
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB' }}
+                                  >
+                                    <RotateCcw size={18} /> Return Job
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {isApproved && (
+                              <div style={{ textAlign: 'center', padding: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
+                                <h3 style={{ color: 'var(--color-success)', marginBottom: '0.5rem', fontSize: '1.2rem' }}>Approved by {dKey === 'micro' ? 'Micro' : 'Chemical'}</h3>
+                                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Waiting for the {otherKey === 'micro' ? 'Micro' : 'Chemical'} department to approve their details before analysts can be assigned.</p>
+                                 <button 
+                                    onClick={() => {
+                                      setReturnModalData({ jobId: job._id, dept: dKey });
+                                      setReturnNote('');
+                                    }}
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB', margin: '0 auto' }}
+                                  >
+                                    <RotateCcw size={18} /> Return Job
+                                  </button>
+                              </div>
+                            )}
+
+                            {isPending && (
+                              <>
+                                {/* Bulk assign */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+                                  <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Assign Analysts to Parameters ({deptParams.length})</h4>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <label style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Bulk assign all to:</label>
+                                    <select
+                                      onChange={e => { handleAssignAll(job._id, e.target.value, deptParams); e.target.value = ''; }}
+                                      defaultValue=""
+                                      style={{ minWidth: '150px' }}
+                                    >
+                                      <option value="" disabled>Select analyst...</option>
+                                      {assistants.map(ast => <option key={ast._id} value={ast._id}>{ast.name}</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {/* Deadline + Submit */}
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                                  <div style={{ flex: '1 1 180px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.4rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>Deadline Date <span style={{color:'var(--color-danger)'}}>*</span></label>
+                                    <input
+                                      type="date"
+                                      value={deadlineDates[job._id] || ''}
+                                      onChange={e => {
+                                        setDeadlineDates(prev => ({ ...prev, [job._id]: e.target.value }));
+                                        setDeadlineTimes(prev => {
+                                          if (!prev[job._id] && e.target.value) {
+                                            return { ...prev, [job._id]: '17:00' };
+                                          }
+                                          return prev;
+                                        });
+                                      }}
+                                      required
+                                      style={{ width: '100%' }}
+                                    />
+                                  </div>
+                                  <div style={{ flex: '1 1 130px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.4rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>Due Time <span style={{color:'var(--color-danger)'}}>*</span></label>
+                                    <input
+                                      type="time"
+                                      value={deadlineTimes[job._id] || ''}
+                                      onChange={e => setDeadlineTimes(prev => ({ ...prev, [job._id]: e.target.value }))}
+                                      required
+                                      style={{ width: '100%' }}
+                                    />
+                                  </div>
+                                  <div style={{ flex: '0 0 auto', display: 'flex', gap: '0.5rem' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setReturnModalData({ jobId: job._id, dept: dKey });
+                                        setReturnNote('');
+                                      }}
+                                      className="btn btn-secondary"
+                                      style={{ padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB' }}
+                                    >
+                                      <RotateCcw size={16} /> Return
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSubmit(job)}
+                                      className="btn btn-primary"
+                                      disabled={submittingJobId === job._id}
+                                      style={{ padding: '0.6rem 1.5rem', justifyContent: 'center' }}
+                                    >
+                                      {submittingJobId === job._id ? <Spinner size="sm" message="Dispatching..." color="#fff" /> : 'Dispatch Job'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </>
                         );
                       })()
                     )}

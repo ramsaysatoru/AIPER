@@ -1068,7 +1068,7 @@ function Jobs() {
                   <div style={{ gridColumn: '1 / -1' }}><label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem' }}>Customer Address <span style={{ color: 'var(--color-danger)' }}>*</span></label><input type="text" value={formData.customer_address} onChange={e => setField('customer_address', e.target.value)} required style={{ width: '100%' }} /></div>
                   <div><label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem' }}>Contact Person</label><input value={formData.contact_person} onChange={e => setField('contact_person', e.target.value)} /></div>
                   <div><label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem' }}>Email</label><input type="email" value={formData.email} onChange={e => setField('email', e.target.value)} /></div>
-                  <div><label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem' }}>Customer Reference No.</label><input inputMode="numeric" pattern="[0-9]*" title="Numbers only" value={formData.customer_reference_no} onChange={e => setField('customer_reference_no', e.target.value.replace(/[^0-9]/g, ''))} /></div>
+                  <div><label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem' }}>Customer Reference No.</label><input type="text" placeholder="e.g. REF-2023-A1" value={formData.customer_reference_no} onChange={e => setField('customer_reference_no', e.target.value)} /></div>
                 </div>
               )}
             </div>

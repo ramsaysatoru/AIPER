@@ -26,9 +26,13 @@ router.get('/', protect, async (req, res) => {
 router.get('/incoming', protect, authorize('HEAD'), async (req, res) => {
   try {
     const dept = req.user.department ? req.user.department.toLowerCase() : '';
-    const toDept = (dept === 'chemical') ? 'chemical' : 'micro';
     
-    const transfers = await SampleTransfer.find({ toDepartment: toDept, status: 'SENT' })
+    // Transfers are ALWAYS Micro -> Chemical.
+    if (dept !== 'chemical') {
+      return res.json([]);
+    }
+    
+    const transfers = await SampleTransfer.find({ toDepartment: 'chemical', status: 'SENT' })
       .populate('sentBy', 'name department')
       .sort({ sentAt: -1 })
       .lean();
@@ -47,13 +51,17 @@ router.get('/incoming', protect, authorize('HEAD'), async (req, res) => {
 router.get('/outgoing', protect, authorize('HEAD'), async (req, res) => {
   try {
     const dept = req.user.department ? req.user.department.toLowerCase() : '';
-    const fromDept = (dept === 'chemical') ? 'chemical' : 'micro';
     
-    // Find multi-department jobs where this dept is not RETURNED
+    // Transfers are ALWAYS Micro -> Chemical.
+    if (dept !== 'micro') {
+      return res.json([]);
+    }
+    
+    // Find multi-department jobs where micro dept is not RETURNED
     const jobs = await Job.find({
       'distribution.micro.required': true,
       'distribution.chemical.required': true,
-      [`distribution.${fromDept}.status`]: { $ne: 'RETURNED' }
+      'distribution.micro.status': { $ne: 'RETURNED' }
     });
 
     const uniqueSerials = [...new Set(jobs.map(j => j.sampleSerial))];
@@ -88,8 +96,12 @@ router.post('/', protect, authorize('HEAD'), async (req, res) => {
     }
 
     const dept = req.user.department ? req.user.department.toLowerCase() : '';
-    const fromDept = (dept === 'chemical') ? 'chemical' : 'micro';
-    const toDept = fromDept === 'micro' ? 'chemical' : 'micro';
+    if (dept !== 'micro') {
+      return res.status(403).json({ message: 'Only the Micro department can initiate sample transfers to Chemical.' });
+    }
+    
+    const fromDept = 'micro';
+    const toDept = 'chemical';
 
     // Check no existing transfer
     const existing = await SampleTransfer.findOne({ sampleSerial: job.sampleSerial });
@@ -155,8 +167,10 @@ router.put('/:id/receive', protect, authorize('HEAD'), async (req, res) => {
     }
 
     const dept = req.user.department ? req.user.department.toLowerCase() : '';
-    const myDept = (dept === 'chemical') ? 'chemical' : 'micro';
-    if (transfer.toDepartment !== myDept) {
+    if (dept !== 'chemical') {
+      return res.status(403).json({ message: 'Only the Chemical department can receive sample transfers.' });
+    }
+    if (transfer.toDepartment !== 'chemical') {
       return res.status(403).json({ message: 'This transfer is not addressed to your department' });
     }
 
