@@ -982,17 +982,7 @@ function Dispatcher() {
                                         />
                                       </div>
                                       <div style={{ flex: '0 0 auto', display: 'flex', gap: '0.5rem' }}>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setReturnModalData({ jobId: job._id, dept: dKey });
-                                            setReturnNote('');
-                                          }}
-                                          className="btn btn-secondary"
-                                          style={{ padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#B45309', border: '1px solid #F59E0B', backgroundColor: '#FFFBEB' }}
-                                        >
-                                          <RotateCcw size={16} /> Return
-                                        </button>
+
                                         <button
                                           type="button"
                                           onClick={() => handleSubmit(job)}
