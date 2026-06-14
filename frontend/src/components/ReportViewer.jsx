@@ -583,6 +583,20 @@ export default function ReportViewer({
         if (tag === 'td' || tag === 'th') {
           node.style.width = '';
         }
+        
+        // Strip fixed dimensions and padding from containers to prevent page overflow in DOCX
+        if (node.style.minWidth) node.style.minWidth = '';
+        if (node.style.maxWidth) node.style.maxWidth = '';
+        if (node.style.padding) node.style.padding = '0px';
+        if (node.style.margin === '0 auto' || node.style.margin === '0px auto') node.style.margin = '0px';
+        
+        // If width is fixed in pixels and it's large (like 780px), strip it so it flows into the page margins
+        if (node.style.width && node.style.width.includes('px')) {
+          const pxVal = parseInt(node.style.width);
+          if (pxVal > 500) {
+            node.style.width = '100%';
+          }
+        }
       }
     });
     
