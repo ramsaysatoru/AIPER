@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import html2pdf from 'html2pdf.js';
 import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -503,7 +503,29 @@ export default function ReportViewer({
   const reportRef = useRef();
   const nablReportRef = useRef();
   const nonNablReportRef = useRef();
+  const wrapperRef = useRef(null);
+  const contentRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const [contentHeight, setContentHeight] = useState('auto');
 
+  useLayoutEffect(() => {
+    const updateScale = () => {
+      if (!wrapperRef.current || !contentRef.current) return;
+      const availableWidth = wrapperRef.current.clientWidth;
+      if (availableWidth < 780) {
+        const newScale = availableWidth / 780;
+        setScale(newScale);
+        setContentHeight(`${contentRef.current.offsetHeight * newScale}px`);
+      } else {
+        setScale(1);
+        setContentHeight('auto');
+      }
+    };
+    
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
   const isNabl = nablMode === 'nabl';
   const isHybrid = nablMode === 'hybrid';
 
@@ -580,34 +602,43 @@ export default function ReportViewer({
       }
     }
 
-    // Wrap in standard HTML structure that MS Word understands as a web archive
-    const htmlString = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    // Wrap in standard HTML structure
+    const html = `
+      <!DOCTYPE html>
+      <html>
       <head>
-        <meta charset='utf-8'>
+        <meta charset="utf-8">
         <title>Test Report</title>
         <style>
           body, table, td, th, div, span, p { font-family: "Times New Roman", Times, serif !important; }
         </style>
       </head>
-      <body>${clone.outerHTML}</body>
+      <body>
+        ${clone.outerHTML}
+      </body>
       </html>
     `;
     
-    // Create the MHT blob masquerading as a .doc
-    const blob = new Blob(['\ufeff', htmlString], {
-      type: 'application/msword'
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    // Replace .docx with .doc in the filename
-    link.download = filename.replace('.docx', '.doc');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      // Use backend LibreOffice API to generate a REAL OOXML DOCX Blob
+      const response = await axios.post(`${API_URL}/api/export/docx`, { html }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        responseType: 'blob'
+      });
+      
+      const docxBlob = response.data;
+      const url = URL.createObjectURL(docxBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download DOCX', err);
+      alert('Error generating DOCX file. Please try again.');
+    }
   };
 
   return (
@@ -626,17 +657,17 @@ export default function ReportViewer({
                 className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Download size={16} /> Download NABL PDF
               </button>
-              <button onClick={() => downloadDOCX(nablReportRef, `NABL_Report_${jobCode}.doc`)}
+              <button onClick={() => downloadDOCX(nablReportRef, `NABL_Report_${jobCode}.docx`)}
                 className="btn" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#3b82f6', color: 'white', border: 'none' }}>
-                <Download size={16} /> Download NABL DOC
+                <Download size={16} /> Download NABL DOCX
               </button>
               <button onClick={() => downloadPDF(nonNablReportRef, `NonNABL_Report_${jobCode}.pdf`)}
                 className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Download size={16} /> Download Non-NABL PDF
               </button>
-              <button onClick={() => downloadDOCX(nonNablReportRef, `NonNABL_Report_${jobCode}.doc`)}
+              <button onClick={() => downloadDOCX(nonNablReportRef, `NonNABL_Report_${jobCode}.docx`)}
                 className="btn" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#3b82f6', color: 'white', border: 'none' }}>
-                <Download size={16} /> Download Non-NABL DOC
+                <Download size={16} /> Download Non-NABL DOCX
               </button>
             </>
           ) : (
@@ -645,68 +676,59 @@ export default function ReportViewer({
                 className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Download size={16} /> Download PDF
               </button>
-              <button onClick={() => downloadDOCX(reportRef, `Report_${jobCode}.doc`)}
+              <button onClick={() => downloadDOCX(reportRef, `Report_${jobCode}.docx`)}
                 className="btn" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#3b82f6', color: 'white', border: 'none' }}>
-                <Download size={16} /> Download DOC
+                <Download size={16} /> Download DOCX
               </button>
             </>
           )}
         </div>
       </div>
 
-      <style>{`
-        .mobile-scale-wrapper {
-          width: 100%;
-          overflow-x: auto;
-          background: #f1f5f9;
-          padding: 8px 0;
-        }
-        .report-scale-container {
-          transform-origin: top center;
-          margin: 0 auto;
-        }
-        @media (max-width: 820px) {
-          .report-scale-container {
-            zoom: calc((100vw - 16px) / 780);
-          }
-        }
-      `}</style>
-      
-      <div className="mobile-scale-wrapper" style={{ border: '1px solid #ccc', borderRadius: '4px' }}>
-        <div className="report-scale-container">
-        {isHybrid ? (
-          <>
-            {/* NABL section */}
-            <div style={{ padding: '8px 16px', backgroundColor: '#e0f2fe', fontWeight: 700, fontSize: '13px',
-              borderBottom: '2px solid #0284c7' }}>
-              NABL Report
-            </div>
-            <SingleReport
-              microReport={nablMicroReport}
-              chemicalReport={nablChemicalReport}
-              isNabl={true}
-              forwardedRef={nablReportRef}
-            />
-            {/* Non-NABL section */}
-            <div style={{ padding: '8px 16px', backgroundColor: '#f1f5f9', fontWeight: 700, fontSize: '13px',
-              borderTop: '2px solid #64748b', borderBottom: '2px solid #64748b', marginTop: '24px' }}>
-              Non-NABL Report
-            </div>
-            <SingleReport
-              microReport={nonNablMicroReport}
-              chemicalReport={nonNablChemicalReport}
-              isNabl={false}
-              forwardedRef={nonNablReportRef}
-            />
-          </>
-        ) : (
-          <SingleReport
-            microReport={isCombined ? microReport : (report ? { ...report, _job: report._job } : null)}
-            chemicalReport={isCombined ? chemicalReport : null}
-            isNabl={isNabl}
-            forwardedRef={reportRef}
-          />
-        )}
+      <div ref={wrapperRef} style={{ border: '1px solid #ccc', borderRadius: '4px', width: '100%', overflow: 'hidden', background: '#f1f5f9' }}>
+        <div style={{ width: '100%', height: contentHeight, overflow: 'hidden' }}>
+          <div 
+            ref={contentRef}
+            style={{ 
+              transform: `scale(${scale})`, 
+              transformOrigin: 'top left', 
+              width: '780px',
+            }}
+          >
+            {isHybrid ? (
+              <>
+                {/* NABL section */}
+                <div style={{ padding: '8px 16px', backgroundColor: '#e0f2fe', fontWeight: 700, fontSize: '13px',
+                  borderBottom: '2px solid #0284c7' }}>
+                  NABL Report
+                </div>
+                <SingleReport
+                  microReport={nablMicroReport}
+                  chemicalReport={nablChemicalReport}
+                  isNabl={true}
+                  forwardedRef={nablReportRef}
+                />
+                {/* Non-NABL section */}
+                <div style={{ padding: '8px 16px', backgroundColor: '#f1f5f9', fontWeight: 700, fontSize: '13px',
+                  borderTop: '2px solid #64748b', borderBottom: '2px solid #64748b', marginTop: '24px' }}>
+                  Non-NABL Report
+                </div>
+                <SingleReport
+                  microReport={nonNablMicroReport}
+                  chemicalReport={nonNablChemicalReport}
+                  isNabl={false}
+                  forwardedRef={nonNablReportRef}
+                />
+              </>
+            ) : (
+              <SingleReport
+                microReport={isCombined ? microReport : (report ? { ...report, _job: report._job } : null)}
+                chemicalReport={isCombined ? chemicalReport : null}
+                isNabl={isNabl}
+                forwardedRef={reportRef}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
