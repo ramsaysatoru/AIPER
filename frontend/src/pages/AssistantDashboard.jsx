@@ -121,7 +121,7 @@ export default function AssistantDashboard() {
       if (e.key === 'Escape') {
         setShowConfirmModal(false);
         setErrorModalData(null);
-        setShowMethodLibrary(false);
+        setShowAddMethod(false);
       }
       
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -140,7 +140,7 @@ export default function AssistantDashboard() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showConfirmModal, errorModalData, showMethodLibrary]);
+  }, [showConfirmModal, errorModalData, showAddMethod]);
 
   const formatDateTimeLocal = (dateString) => {
     if (!dateString) return '';
