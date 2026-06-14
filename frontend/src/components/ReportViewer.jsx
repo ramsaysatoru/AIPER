@@ -659,14 +659,15 @@ export default function ReportViewer({
           width: 100%;
           overflow-x: auto;
           background: #f1f5f9;
-          padding: 10px;
+          padding: 8px 0;
         }
         .report-scale-container {
           transform-origin: top center;
+          margin: 0 auto;
         }
         @media (max-width: 820px) {
           .report-scale-container {
-            zoom: calc(100vw / 820);
+            zoom: calc((100vw - 16px) / 780);
           }
         }
       `}</style>

@@ -345,7 +345,13 @@ export default function JobTimeline({ job, allJobs = [], onReopen }) {
 
       {/* Report Viewer Modal */}
       {selectedReport && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', zIndex: 1000, overflowY: 'auto', padding: '2rem' }}>
+        <div className="report-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', zIndex: 1000, overflowY: 'auto' }}>
+          <style>{`
+            .report-modal-overlay { padding: 2rem; }
+            @media (max-width: 820px) {
+              .report-modal-overlay { padding: 0.25rem; }
+            }
+          `}</style>
           <div style={{ maxWidth: '880px', margin: '0 auto', position: 'relative' }}>
             <button
               onClick={() => setSelectedReport(null)}
