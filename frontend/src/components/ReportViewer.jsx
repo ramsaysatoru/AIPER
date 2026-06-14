@@ -594,9 +594,12 @@ export default function ReportViewer({
           reader.readAsDataURL(blob);
         });
         img.src = base64;
-        // Fix image width for Word
-        if (img.style.width) img.width = parseInt(img.style.width);
-        if (img.style.height) img.height = parseInt(img.style.height);
+        
+        // Remove style.width from images so html-to-docx relies purely on intrinsic base64 dimensions
+        // Passing NaN or percentage strings caused Mobile Word to mark the file as corrupted.
+        img.removeAttribute('style');
+        img.removeAttribute('width');
+        img.removeAttribute('height');
       } catch (err) {
         console.warn('Failed to convert image to base64 for DOCX export', err);
       }
