@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import html2pdf from 'html2pdf.js';
-import { asBlob } from 'html-docx-js-typescript';
+import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 import { Download } from 'lucide-react';
 import logo from '../assets/Acropolis20Logo.png';
 import nablLogo from '../assets/nabl-logo.png';
@@ -574,17 +575,26 @@ export default function ReportViewer({
       </html>
     `;
     
-    // Use html-docx-js to generate a real DOCX Blob
-    const docxBlob = await asBlob(html, { orientation: 'portrait', margins: { top: 720, right: 720, bottom: 720, left: 720 } });
-    
-    const url = URL.createObjectURL(docxBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      // Use backend to generate a REAL OOXML DOCX Blob
+      const response = await axios.post(`${API_URL}/api/export/docx`, { html }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        responseType: 'blob'
+      });
+      
+      const docxBlob = response.data;
+      const url = URL.createObjectURL(docxBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download DOCX', err);
+      alert('Error generating DOCX file. Please try again.');
+    }
   };
 
   return (
