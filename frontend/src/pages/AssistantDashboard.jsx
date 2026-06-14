@@ -57,18 +57,17 @@ export default function AssistantDashboard() {
     fetchTestMethods();
   }, []);
 
-  const handleAddTestMethod = async (e) => {
-    e.preventDefault();
-    if (!newMethodText.trim()) return;
+  const handleAddTestMethod = async (newText) => {
+    if (!newText.trim()) return null;
     try {
-      await axios.post(`${API_URL}/api/test-methods`, { text: newMethodText }, {
+      const res = await axios.post(`${API_URL}/api/test-methods`, { text: newText }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      setNewMethodText('');
-      setShowAddMethod(false);
       fetchTestMethods();
+      return res.data;
     } catch (err) {
       alert(err.response?.data?.message || 'Error adding test method');
+      return null;
     }
   };
 
@@ -474,23 +473,7 @@ export default function AssistantDashboard() {
               </div>
             </div>
 
-            <div style={{ marginBottom: '0.5rem' }}>
-              <button type="button" onClick={() => setShowAddMethod(!showAddMethod)} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-                <Plus size={14} /> Add New Method
-              </button>
-              {showAddMethod && (
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    placeholder="Enter new test method..."
-                    value={newMethodText}
-                    onChange={e => setNewMethodText(e.target.value)}
-                    style={{ ...inputStyle, maxWidth: '300px' }}
-                  />
-                  <button type="button" onClick={handleAddTestMethod} className="btn btn-primary" disabled={!newMethodText.trim()}>Save</button>
-                </div>
-              )}
-            </div>
+
 
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -569,6 +552,7 @@ export default function AssistantDashboard() {
                               testMethods={testMethods}
                               onUpdate={handleUpdateTestMethod}
                               onDelete={handleDeleteTestMethod}
+                              onCreate={handleAddTestMethod}
                               inputStyle={inputStyle}
                             />
                           </div>
@@ -695,12 +679,15 @@ export default function AssistantDashboard() {
 }
 
 // Custom TestMethodDropdown Component
-const TestMethodDropdown = ({ value, onChange, testMethods, onUpdate, onDelete, inputStyle }) => {
+const TestMethodDropdown = ({ value, onChange, testMethods, onUpdate, onDelete, onCreate, inputStyle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState(value || '');
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newMethodText, setNewMethodText] = useState('');
+  const [isSavingNew, setIsSavingNew] = useState(false);
 
   // Keep filter synced with value if changed from outside
   useEffect(() => {
@@ -815,6 +802,41 @@ const TestMethodDropdown = ({ value, onChange, testMethods, onUpdate, onDelete, 
       )}
       {isOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9 }} onClick={() => setIsOpen(false)} />
+      )}
+      
+      {!isCreatingNew && (
+        <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-start' }}>
+          <button type="button" onClick={() => setIsCreatingNew(true)} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <Plus size={14} /> Create New Method
+          </button>
+        </div>
+      )}
+      {isCreatingNew && (
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', padding: '0.75rem', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-sm)', alignItems: 'center', border: '1px solid var(--color-border)' }}>
+          <input
+            type="text"
+            placeholder="New method name..."
+            value={newMethodText}
+            onChange={e => setNewMethodText(e.target.value)}
+            style={{ ...inputStyle, flex: 1, padding: '0.4rem', fontSize: '0.8rem' }}
+            autoFocus
+          />
+          <button type="button" onClick={async () => {
+            if (!newMethodText.trim() || isSavingNew) return;
+            setIsSavingNew(true);
+            const created = await onCreate(newMethodText);
+            if (created) {
+              onChange(created.text);
+              setFilter(created.text);
+              setIsCreatingNew(false);
+              setNewMethodText('');
+            }
+            setIsSavingNew(false);
+          }} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', minWidth: '70px', justifyContent: 'center' }} disabled={!newMethodText.trim() || isSavingNew}>
+            {isSavingNew ? <Spinner size="sm" color="#fff" /> : 'Save'}
+          </button>
+          <button type="button" onClick={() => { setIsCreatingNew(false); setNewMethodText(''); }} disabled={isSavingNew} className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid var(--color-border)' }}>Cancel</button>
+        </div>
       )}
     </div>
   );
