@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/authMiddleware');
+const { protect } = require('../middlewares/authMiddleware');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
-router.post('/docx', authMiddleware, async (req, res) => {
+router.post('/docx', protect, async (req, res) => {
   const { html } = req.body;
   if (!html) return res.status(400).json({ message: 'HTML content required' });
 
