@@ -1102,7 +1102,7 @@ function Jobs() {
 
   const fetchJobs = async () => {
     try {
-      await fetchWithCache(`${API_URL}/api/jobs`, CACHE_KEYS.JOBS, setJobs);
+      await fetchWithCache(`${API_URL}/api/jobs?includeCancelled=true`, CACHE_KEYS.JOBS, setJobs);
     } catch (err) {
       console.error(err);
     }

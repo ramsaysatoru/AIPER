@@ -65,7 +65,7 @@ function Dashboard() {
         }
 
         const [jobsRes, instancesRes, usersRes] = await Promise.all([
-          axios.get(`${API_URL}/api/jobs`),
+          axios.get(`${API_URL}/api/jobs?includeCancelled=true`),
           axios.get(`${API_URL}/api/tests/instances`),
           axios.get(`${API_URL}/api/users`)
         ]);
@@ -474,7 +474,7 @@ function Audit() {
 
       const [resInst, resJobs] = await Promise.all([
         axios.get(`${API_URL}/api/tests/instances`),
-        axios.get(`${API_URL}/api/jobs`)
+        axios.get(`${API_URL}/api/jobs?includeCancelled=true`)
       ]);
       sessionStorage.setItem(CACHE_KEYS.INSTANCES, JSON.stringify(resInst.data));
       sessionStorage.setItem(CACHE_KEYS.JOBS, JSON.stringify(resJobs.data));
