@@ -9,6 +9,9 @@ const jobSchema = new mongoose.Schema({
   // Legacy field — kept for backward compat, auto-populated from customer.customer_name on create
   clientName: { type: String },
   totalSampleVolume: { type: Number },
+  status: { type: String, enum: ['ACTIVE', 'CANCELLED'], default: 'ACTIVE' },
+  cancelledAt: { type: Date },
+  cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
   // --- Parameter System ---
   groupMetadata: {

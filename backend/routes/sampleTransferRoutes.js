@@ -23,9 +23,9 @@ router.get('/', protect, async (req, res) => {
 });
 
 // GET pending incoming transfers for the current HEAD's department
-router.get('/incoming', protect, authorize('HEAD'), async (req, res) => {
+router.get('/incoming', protect, authorize('HEAD', 'ADMIN', 'ADMIN_OFFICER'), async (req, res) => {
   try {
-    const dept = req.user.department ? req.user.department.toLowerCase() : '';
+    const dept = req.user.department ? req.user.department.toLowerCase().trim() : '';
     
     // Transfers are ALWAYS Micro -> Chemical.
     if (dept !== 'chemical') {
@@ -48,9 +48,9 @@ router.get('/incoming', protect, authorize('HEAD'), async (req, res) => {
 });
 
 // GET pending outgoing transfers for the current HEAD's department
-router.get('/outgoing', protect, authorize('HEAD'), async (req, res) => {
+router.get('/outgoing', protect, authorize('HEAD', 'ADMIN', 'ADMIN_OFFICER'), async (req, res) => {
   try {
-    const dept = req.user.department ? req.user.department.toLowerCase() : '';
+    const dept = req.user.department ? req.user.department.toLowerCase().trim() : '';
     
     // Transfers are ALWAYS Micro -> Chemical.
     if (dept !== 'micro') {
@@ -103,9 +103,9 @@ router.post('/', protect, authorize('HEAD'), async (req, res) => {
       return res.status(400).json({ message: 'This job is not a multi-department job — no transfer needed' });
     }
 
-    const dept = req.user.department ? req.user.department.toLowerCase() : '';
-    if (dept !== 'micro') {
-      return res.status(403).json({ message: 'Only the Micro department can initiate sample transfers to Chemical.' });
+    const dept = req.user.department ? req.user.department.toLowerCase().trim() : '';
+    if (dept !== 'micro' && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only the Micro department or Admin can initiate sample transfers to Chemical.' });
     }
     
     const fromDept = 'micro';
@@ -195,9 +195,9 @@ router.put('/:id/receive', protect, authorize('HEAD'), async (req, res) => {
       return res.status(400).json({ message: 'Transfer already confirmed' });
     }
 
-    const dept = req.user.department ? req.user.department.toLowerCase() : '';
-    if (dept !== 'chemical') {
-      return res.status(403).json({ message: 'Only the Chemical department can receive sample transfers.' });
+    const dept = req.user.department ? req.user.department.toLowerCase().trim() : '';
+    if (dept !== 'chemical' && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only the Chemical department or Admin can receive sample transfers.' });
     }
     if (transfer.toDepartment !== 'chemical') {
       return res.status(403).json({ message: 'This transfer is not addressed to your department' });

@@ -807,3 +807,35 @@ tr:hover {
     font-size: 0.75rem;
   }
 }
+
+@keyframes calendarHint {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); border-color: var(--color-primary); }
+  50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); border-color: var(--color-border); }
+}
+.calendar-hint-pulse {
+  animation: calendarHint 1.5s ease-in-out 3;
+  background-color: var(--color-primary-light, #dbeafe) !important;
+  border-color: var(--color-primary) !important;
+}
+.calendar-hint-pulse:hover {
+  background-color: var(--color-primary) !important;
+}
+.calendar-hint-pulse:hover svg {
+  color: white !important;
+}
+
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  background-color: var(--color-primary-light, #dbeafe);
+  padding: 4px;
+  border-radius: 4px;
+  animation: calendarHint 1.5s ease-in-out 3;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  background-color: var(--color-primary);
+  filter: invert(1);
+}
+

@@ -9,6 +9,7 @@ const { authorize } = require('../middlewares/roleMiddleware');
 const { createNotification, notifyAdmins, notifyAdminOfficers } = require('../utils/notifier');
 const User = require('../models/User');
 const UlrCounter = require('../models/UlrCounter');
+const SampleCounter = require('../models/SampleCounter');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,13 +27,24 @@ function buildJobCode(serial) {
 }
 
 /**
- * Return the next sample serial by looking at the highest sampleSerial
- * already in the DB, or falling back to SAMPLE_ID_START from .env.
+ * Return the next sample serial using an atomic counter.
+ * If the counter doesn't exist, initialize it from the highest sampleSerial in Job collection.
  */
 async function getNextSerial() {
-  const start = parseInt(process.env.SAMPLE_ID_START || '1001', 10);
-  const last = await Job.findOne({}, { sampleSerial: 1 }, { sort: { sampleSerial: -1 } });
-  return last && last.sampleSerial ? last.sampleSerial + 1 : start;
+  let counter = await SampleCounter.findOne({});
+  if (!counter) {
+    const start = parseInt(process.env.SAMPLE_ID_START || '1000', 10);
+    const last = await Job.findOne({}, { sampleSerial: 1 }, { sort: { sampleSerial: -1 } });
+    const initialValue = last && last.sampleSerial ? last.sampleSerial : start;
+    counter = await SampleCounter.create({ currentValue: initialValue });
+  }
+  
+  const updated = await SampleCounter.findOneAndUpdate(
+    {},
+    { $inc: { currentValue: 1 } },
+    { new: true }
+  );
+  return updated.currentValue;
 }
 
 /**
@@ -57,8 +69,15 @@ async function getNextUlr() {
  */
 router.get('/next-sample-id', protect, async (req, res) => {
   try {
-    const serial = await getNextSerial();
-    res.json({ serial, padded: String(serial).padStart(4, '0') });
+    let counter = await SampleCounter.findOne({});
+    if (!counter) {
+      const start = parseInt(process.env.SAMPLE_ID_START || '1000', 10);
+      const last = await Job.findOne({}, { sampleSerial: 1 }, { sort: { sampleSerial: -1 } });
+      const initialValue = last && last.sampleSerial ? last.sampleSerial : start;
+      counter = { currentValue: initialValue };
+    }
+    const nextSerial = counter.currentValue + 1;
+    res.json({ currentValue: counter.currentValue, nextValue: nextSerial, serial: nextSerial, padded: String(nextSerial).padStart(4, '0') });
   } catch (err) {
     res.status(500).json({ message: 'Error calculating next sample ID', error: err.message });
   }
@@ -101,18 +120,42 @@ router.put('/ulr-offset', protect, authorize('ADMIN_OFFICER'), async (req, res) 
   }
 });
 
+/**
+ * PUT /api/jobs/sample-serial-offset
+ * Adjusts the current value of the sample serial counter.
+ */
+router.put('/sample-serial-offset', protect, authorize('ADMIN_OFFICER', 'ADMIN'), async (req, res) => {
+  try {
+    const { offset } = req.body;
+    let counter = await SampleCounter.findOne({});
+    if (!counter) {
+      counter = await SampleCounter.create({ currentValue: parseInt(offset, 10) });
+    } else {
+      counter.currentValue = parseInt(offset, 10);
+      await counter.save();
+    }
+    res.json({ message: 'Sample Serial updated', currentValue: counter.currentValue });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating sample serial offset', error: err.message });
+  }
+});
+
 // Get all jobs based on role
 router.get('/', protect, async (req, res) => {
   try {
     let query = {};
+    if (req.query.includeCancelled !== 'true') {
+      query.status = { $ne: 'CANCELLED' };
+    }
+    
     if (req.user.role === 'HEAD') {
       const dept = req.user.department ? req.user.department.toLowerCase() : '';
       if (dept === 'micro') {
-        query = { 'distribution.micro.required': true };
+        query['distribution.micro.required'] = true;
       } else if (dept === 'chemical') {
-        query = { 'distribution.chemical.required': true };
+        query['distribution.chemical.required'] = true;
       } else {
-        query = { _id: null };
+        query._id = null;
       }
     }
     // ADMIN_OFFICER and ADMIN see all jobs.
@@ -634,38 +677,53 @@ router.post('/:id/retest', protect, authorize('AMIN_OFFIC'), async (req, res) =>
   }
 });
 
-// Delete a job
-router.delete('/:id', protect, authorize('ADMIN_OFFICER', 'ADMIN'), async (req, res) => {
+// Cancel a job (Soft Delete)
+router.put('/:id/cancel', protect, authorize('ADMIN_OFFICER', 'ADMIN'), async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
 
-    // Delete associated TestInstances
-    await TestInstance.deleteMany({ jobId: job._id });
+    if (job.status === 'CANCELLED') {
+      return res.status(400).json({ message: 'Job is already cancelled' });
+    }
 
-    // Delete associated Notifications
-    await Notification.deleteMany({ relatedJobId: job._id });
+    job.status = 'CANCELLED';
+    job.cancelledAt = new Date();
+    job.cancelledBy = req.user._id;
+    job.history.push({
+      action: 'UPDATED',
+      by: req.user._id,
+      note: 'Job was cancelled.'
+    });
 
-    // Delete the job itself
-    await Job.findByIdAndDelete(job._id);
+    await job.save();
 
-    // Clean up orphan sample transfers (if this was the last job with this serial)
-    if (job.sampleSerial) {
-      const siblingCount = await Job.countDocuments({ sampleSerial: job.sampleSerial });
-      if (siblingCount === 0) {
-        await SampleTransfer.deleteMany({ sampleSerial: job.sampleSerial });
+    // If it has a sibling job (hybrid), cancel it too to keep them in sync
+    if (job.siblingJobId) {
+      const sibling = await Job.findById(job.siblingJobId);
+      if (sibling && sibling.status !== 'CANCELLED') {
+        sibling.status = 'CANCELLED';
+        sibling.cancelledAt = new Date();
+        sibling.cancelledBy = req.user._id;
+        sibling.history.push({
+          action: 'UPDATED',
+          by: req.user._id,
+          note: 'Sibling job was cancelled.'
+        });
+        await sibling.save();
       }
     }
 
     if (req.app.get('io')) {
-      req.app.get('io').emit('JOB_DELETED');
+      req.app.get('io').emit('JOB_CANCELLED');
+      req.app.get('io').emit('JOB_UPDATED');
     }
 
-    res.json({ message: 'Job and associated records deleted successfully' });
+    res.json({ message: 'Job successfully cancelled', job });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting job', error: error.message });
+    res.status(500).json({ message: 'Error cancelling job', error: error.message });
   }
 });
 
