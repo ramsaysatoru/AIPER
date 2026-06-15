@@ -114,7 +114,7 @@ const buildHeaderTable = (isNabl) => {
       ],
       verticalAlign: VerticalAlign.CENTER,
       borders: BORDERS_ALL,
-      width: { size: Math.round(PAGE_WIDTH_DXA * 45 / 100), type: WidthType.DXA }
+      width: { size: Math.round(PAGE_WIDTH_DXA * 50 / 100), type: WidthType.DXA }
     })
   ];
 
@@ -124,7 +124,7 @@ const buildHeaderTable = (isNabl) => {
       nablRuns.push(new ImageRun({ data: nablLogoBuf, transformation: { width: 75, height: 75 } }));
     }
     if (nablLogoBuf && nablQrcodeBuf) {
-      nablRuns.push(new TextRun({ text: " " })); // Minimal spacing
+      nablRuns.push(new TextRun({ text: "\u00A0\u00A0\u00A0\u00A0\u00A0" })); // 5 Non-breaking spaces for reliable HTML/Word spacing
     }
     if (nablQrcodeBuf) {
       nablRuns.push(new ImageRun({ data: nablQrcodeBuf, transformation: { width: 75, height: 75 } }));
@@ -142,11 +142,11 @@ const buildHeaderTable = (isNabl) => {
         ],
         verticalAlign: VerticalAlign.CENTER,
         borders: BORDERS_ALL,
-        width: { size: Math.round(PAGE_WIDTH_DXA * 30 / 100), type: WidthType.DXA }
+        width: { size: Math.round(PAGE_WIDTH_DXA * 25 / 100), type: WidthType.DXA }
       })
     );
   } else {
-    cells.push(new TableCell({ children: [new Paragraph({ children: [] })], borders: BORDERS_ALL, width: { size: Math.round(PAGE_WIDTH_DXA * 30 / 100), type: WidthType.DXA } }));
+    cells.push(new TableCell({ children: [new Paragraph({ children: [] })], borders: BORDERS_ALL, width: { size: Math.round(PAGE_WIDTH_DXA * 25 / 100), type: WidthType.DXA } }));
   }
 
   return new Table({
