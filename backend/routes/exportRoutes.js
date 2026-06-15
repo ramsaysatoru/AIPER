@@ -20,9 +20,7 @@ const getPopulatedJob = async (jobId) => {
     .populate('createdBy', 'name email role')
     .populate('distribution.micro.assignedHead', 'name')
     .populate('distribution.chemical.assignedHead', 'name')
-    .populate('parameters.parameterId', 'name type unit')
-    .populate('nablParameters.parameterId', 'name type unit')
-    .populate('nonNablParameters.parameterId', 'name type unit');
+    .populate('parameters.parameterId', 'name type unit');
 };
 
 const attachResultsToJob = async (job) => {
@@ -57,8 +55,6 @@ const attachResultsToJob = async (job) => {
   };
 
   jobObj.parameters = mergeResults(jobObj.parameters);
-  jobObj.nablParameters = mergeResults(jobObj.nablParameters);
-  jobObj.nonNablParameters = mergeResults(jobObj.nonNablParameters);
 
   return jobObj;
 };

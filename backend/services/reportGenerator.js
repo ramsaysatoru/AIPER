@@ -354,9 +354,7 @@ const generateReport = async (job, reportType) => {
   const groupName = job.groupMetadata?.group || 'N/A';
   const subGroupName = job.groupMetadata?.subGroup || 'N/A';
   
-  // Decide which parameters to use (hybrid uses separate params arrays)
-  const paramKey = reportType === 'nabl' ? 'nablParameters' : reportType === 'non_nabl' ? 'nonNablParameters' : 'parameters';
-  const parameters = job[paramKey] && job[paramKey].length > 0 ? job[paramKey] : job.parameters;
+  const parameters = job.parameters || [];
   
   const chemicalResults = (parameters || []).filter(p => p.type === 'CHEMICAL');
   const microResults = (parameters || []).filter(p => p.type === 'MICRO');
