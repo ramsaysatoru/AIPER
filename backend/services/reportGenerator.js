@@ -65,7 +65,8 @@ const createImageCell = (imageBuffer, width, height, borders = BORDERS_ALL, alig
         children: [
           new ImageRun({
             data: imageBuffer,
-            transformation: { width, height }
+            transformation: { width, height },
+            type: "png"
           })
         ],
         alignment
@@ -121,13 +122,13 @@ const buildHeaderTable = (isNabl) => {
   if (isNabl) {
     const nablRuns = [];
     if (nablLogoBuf) {
-      nablRuns.push(new ImageRun({ data: nablLogoBuf, transformation: { width: 65, height: 65 } }));
+      nablRuns.push(new ImageRun({ data: nablLogoBuf, transformation: { width: 65, height: 65 }, type: "png" }));
     }
     if (nablLogoBuf && nablQrcodeBuf) {
       nablRuns.push(new TextRun({ text: "\u00A0\u00A0" })); // 2 Non-breaking spaces
     }
     if (nablQrcodeBuf) {
-      nablRuns.push(new ImageRun({ data: nablQrcodeBuf, transformation: { width: 65, height: 65 } }));
+      nablRuns.push(new ImageRun({ data: nablQrcodeBuf, transformation: { width: 65, height: 65 }, type: "png" }));
     }
 
     cells.push(
