@@ -28,18 +28,25 @@ const PAGE_WIDTH_DXA = 10800;
 
 const createCell = (text, options = {}) => {
   const { bold = false, alignment = AlignmentType.LEFT, colSpan = 1, rowSpan = 1, borders = BORDERS_ALL, shading = null, size = 20, verticalAlign = VerticalAlign.CENTER, widthPct } = options;
+  
+  const textString = text || "";
+  const lines = textString.split('\n');
+
+  const children = lines.map(line => 
+    new Paragraph({
+      children: [new TextRun({ text: line, bold, font: "Times New Roman", size })],
+      alignment,
+      spacing: { line: 240, before: 20, after: 20 }
+    })
+  );
+
   const cellOptions = {
-    children: [
-      new Paragraph({
-        children: [new TextRun({ text: text || "", bold, font: "Times New Roman", size })],
-        alignment,
-        spacing: { before: 40, after: 40 }
-      })
-    ],
+    children,
     columnSpan: colSpan,
     rowSpan: rowSpan,
     borders,
-    verticalAlign
+    verticalAlign,
+    margins: { top: 40, bottom: 40, left: 60, right: 60 }
   };
   if (widthPct) {
     cellOptions.width = { size: Math.round(PAGE_WIDTH_DXA * widthPct / 100), type: WidthType.DXA };
@@ -112,20 +119,28 @@ const buildHeaderTable = (isNabl) => {
   ];
 
   if (isNabl) {
+    const nablLogoCells = [];
+    if (nablLogoBuf) {
+      nablLogoCells.push(createImageCell(nablLogoBuf, 45, 45, BORDERS_NONE, AlignmentType.CENTER));
+    }
+    if (nablQrcodeBuf) {
+      nablLogoCells.push(createImageCell(nablQrcodeBuf, 45, 45, BORDERS_NONE, AlignmentType.CENTER));
+    }
+
+    // Force side-by-side using nested table
+    const nestedLogosTable = new Table({
+      rows: [new TableRow({ children: nablLogoCells })],
+      width: { size: 100, type: WidthType.PCT }
+    });
+
     cells.push(
       new TableCell({
         children: [
-          new Paragraph({
-            children: [
-              ...(nablLogoBuf ? [new ImageRun({ data: nablLogoBuf, transformation: { width: 60, height: 60 } })] : []),
-              new TextRun({ text: "  " }), // spacing
-              ...(nablQrcodeBuf ? [new ImageRun({ data: nablQrcodeBuf, transformation: { width: 60, height: 60 } })] : [])
-            ],
-            alignment: AlignmentType.CENTER
-          }),
+          nestedLogosTable,
           new Paragraph({
             children: [new TextRun({ text: "TC-12434", bold: true, font: "Times New Roman", size: 14 })],
-            alignment: AlignmentType.CENTER
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 40 }
           })
         ],
         verticalAlign: VerticalAlign.CENTER,
