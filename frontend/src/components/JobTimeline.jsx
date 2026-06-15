@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { User, Calendar, CheckCircle, Clock, AlertTriangle, RotateCcw } from 'lucide-react';
+import { User, Calendar, CheckCircle, Clock, AlertTriangle, RotateCcw, ArrowRightLeft } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
 export default function JobTimeline({ job, allJobs = [], onReopen }) {
