@@ -35,7 +35,7 @@ export default function ReportModal({ job, onClose }) {
       setStatus(statusRes.data);
 
       // 2. Fetch Blob
-      const blobRes = await axios.get(`${API_URL}/api/export/report/${job._id}?type=${reportType}`, {
+      const blobRes = await axios.get(`${API_URL}/api/export/report/${job._id}?type=${reportType}&_t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });
