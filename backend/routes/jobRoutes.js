@@ -700,6 +700,10 @@ router.put('/:id/cancel', protect, authorize('ADMIN_OFFICER', 'ADMIN'), async (r
 
     await job.save();
 
+    // Cascade cancellation to any generated tasks or transfers
+    await TestInstance.updateMany({ jobId: job._id }, { status: 'CANCELLED' });
+    await SampleTransfer.updateMany({ jobId: job._id }, { status: 'CANCELLED' });
+
     // If it has a sibling job (hybrid), cancel it too to keep them in sync
     if (job.siblingJobId) {
       const sibling = await Job.findById(job.siblingJobId);
@@ -713,6 +717,9 @@ router.put('/:id/cancel', protect, authorize('ADMIN_OFFICER', 'ADMIN'), async (r
           note: 'Sibling job was cancelled.'
         });
         await sibling.save();
+        
+        await TestInstance.updateMany({ jobId: sibling._id }, { status: 'CANCELLED' });
+        await SampleTransfer.updateMany({ jobId: sibling._id }, { status: 'CANCELLED' });
       }
     }
 

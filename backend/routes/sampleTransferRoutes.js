@@ -61,7 +61,8 @@ router.get('/outgoing', protect, authorize('HEAD', 'ADMIN', 'ADMIN_OFFICER'), as
     const jobs = await Job.find({
       'distribution.micro.required': true,
       'distribution.chemical.required': true,
-      'sampleTransferState': 'PENDING_TRANSFER'
+      'sampleTransferState': 'PENDING_TRANSFER',
+      'status': { $ne: 'CANCELLED' }
     }).populate('siblingJobId', 'distribution').lean();
 
     // Filter: if job has a sibling that's also multi-dept, only include NABL

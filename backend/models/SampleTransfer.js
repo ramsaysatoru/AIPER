@@ -9,7 +9,7 @@ const sampleTransferSchema = new mongoose.Schema({
   sentAt:         { type: Date, required: true },
   receivedBy:     { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   receivedAt:     { type: Date },
-  status:         { type: String, enum: ['SENT', 'RECEIVED'], default: 'SENT' }
+  status:         { type: String, enum: ['SENT', 'RECEIVED', 'CANCELLED'], default: 'SENT' }
 }, { timestamps: true });
 
 sampleTransferSchema.index({ sampleSerial: 1, status: 1 });

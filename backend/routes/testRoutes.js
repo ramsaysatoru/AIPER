@@ -17,8 +17,8 @@ router.get('/instances', protect, async (req, res) => {
     let query = {};
 
     if (req.user.role === 'HEAD') {
-      // HEAD sees: instances they created, excluding REOPENED
-      query = { createdBy: req.user._id, status: { $ne: 'REOPENED' } };
+      // HEAD sees: instances they created, excluding REOPENED and CANCELLED
+      query = { createdBy: req.user._id, status: { $nin: ['REOPENED', 'CANCELLED'] } };
     } else if (req.user.role === 'ADMIN_OFFICER') {
       // ADMIN_OFFICER sees all instances
       query = {};
