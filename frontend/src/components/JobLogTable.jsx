@@ -70,9 +70,9 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
 
   return (
     <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-      <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface)' }}>
-        <h2 style={{ margin: 0 }}>{title}</h2>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface)', flexWrap: 'wrap', gap: '1rem' }}>
+        <h2 style={{ margin: 0, width: '100%' }}>{title}</h2>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
             <input
@@ -100,8 +100,9 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
         </div>
       </div>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead style={{ backgroundColor: 'var(--color-surface-hover)' }}>
+      <div style={{ overflowX: 'auto', width: '100%' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+          <thead style={{ backgroundColor: 'var(--color-surface-hover)' }}>
           <tr>
             <th style={{ width: '50px' }}></th>
             <th>Job Code</th>
@@ -182,6 +183,7 @@ export default function JobLogTable({ jobs, title = "Job Logs", onReopen, onDele
           )}
         </tbody>
       </table>
+      </div>
       {historyJob && (
         <GlobalJobHistory history={historyJob.history} onClose={() => setHistoryJob(null)} />
       )}
