@@ -84,10 +84,11 @@ const calcFirstPageOverhead = (job) => {
   return FTL_REF_HEIGHT + HEADER_HEIGHT + TEST_REPORT_TITLE + REPORT_ULR_LINE + estimateSampleInfoHeight(job) + TEST_RESULT_TITLE + RESULTS_HEADER_ROW;
 };
 
-// Continuation page overhead (header + TEST REPORT + Report/ULR + mini sample info + TEST RESULT + column headers)
+// Continuation page overhead (header + TEST REPORT + Report/ULR + mini sample info + column headers)
+// NOTE: TEST RESULT title only appears on the first page
 const calcContinuationOverhead = () => {
   const CONT_SAMPLE_INFO = Math.ceil((LINE_HEIGHT + ROW_PADDING) * SAFETY_FACTOR);
-  return FTL_REF_HEIGHT + HEADER_HEIGHT + TEST_REPORT_TITLE + REPORT_ULR_LINE + CONT_SAMPLE_INFO + TEST_RESULT_TITLE + RESULTS_HEADER_ROW;
+  return FTL_REF_HEIGHT + HEADER_HEIGHT + TEST_REPORT_TITLE + REPORT_ULR_LINE + CONT_SAMPLE_INFO + RESULTS_HEADER_ROW;
 };
 
 const BORDERS_NONE = {
@@ -349,20 +350,9 @@ const generateReport = async (job, reportType) => {
         activeDiscipline = row;
       }
 
-      // --- Footer-aware lookahead ---
-      // Calculate height of ALL remaining rows (after this one) to see if
-      // they plus the footer would still fit on this page. If they would,
-      // we're on the last page and must account for the footer NOW.
-      let remainingHeight = 0;
-      for (let j = idx + 1; j < allRows.length; j++) {
-        remainingHeight += estimateResultRowHeight(allRows[j], hasSpec);
-      }
-      const allRemainingFitHere = (usedHeight + rowHeight + remainingHeight + FOOTER_BLOCK_HEIGHT) <= USABLE_HEIGHT;
+      // Simple footer check: only reserve footer space when adding the last row
       const isLastRow = idx === allRows.length - 1;
-
-      // If all remaining rows + footer fit, include footer in the check
-      // If only this is the last row, include footer in the check
-      const footerHeight = (allRemainingFitHere || isLastRow) ? FOOTER_BLOCK_HEIGHT : 0;
+      const footerHeight = isLastRow ? FOOTER_BLOCK_HEIGHT : 0;
 
       if (usedHeight + rowHeight + footerHeight > USABLE_HEIGHT && pageRows.length > 0) {
         break; // doesn't fit, start new page
@@ -447,11 +437,13 @@ const generateReport = async (job, reportType) => {
       }));
     }
 
-    // TEST RESULT title
-    children.push(new Paragraph({
-      children: [new TextRun({ text: "TEST RESULT", bold: true, font: "Times New Roman", size: 24 })],
-      alignment: AlignmentType.CENTER, spacing: { before: 100, after: 60 }
-    }));
+    // TEST RESULT title — only on the first page
+    if (isFirst) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: "TEST RESULT", bold: true, font: "Times New Roman", size: 24 })],
+        alignment: AlignmentType.CENTER, spacing: { before: 100, after: 60 }
+      }));
+    }
 
     children.push(buildResultsTable(pageObj.rows, hasSpec, pageObj.startIdx, pageObj.repeatHeader));
 
