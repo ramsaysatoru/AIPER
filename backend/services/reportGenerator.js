@@ -50,7 +50,7 @@ const TEST_RESULT_TITLE = 400;    // "TEST RESULT" title
 const RESULTS_HEADER_ROW = 320;   // Column headers of results table
 
 // Footer block (abbreviations + notes + signatures + end of report)
-const FOOTER_BLOCK_HEIGHT = 1800;
+const FOOTER_BLOCK_HEIGHT = 2800;
 
 // Estimate sample info table height based on content
 const estimateSampleInfoHeight = (job) => {
@@ -376,7 +376,7 @@ const generateReport = async (job, reportType) => {
     } else {
       reportUlrCells.push(new TableCell({ children: [new Paragraph({ children: [] })], borders: BORDERS_NONE, width: { size: Math.round(PAGE_WIDTH_DXA / 2), type: WidthType.DXA }, margins: { top: 0, bottom: 0, left: 0, right: 0 } }));
     }
-    children.push(new Table({ rows: [new TableRow({ children: reportUlrCells })], width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA } }));
+    children.push(new Table({ rows: [new TableRow({ children: reportUlrCells })], width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA }, borders: TABLE_BORDERS_NONE }));
 
     if (isFirst) {
       children.push(buildSampleInfoTable(job));
@@ -433,14 +433,14 @@ const generateReport = async (job, reportType) => {
 
       // Diksha always appears
       sigCells.push(new TableCell({ children: [
-        new Paragraph({ children: [new TextRun({ text: "Reviewed By", bold: true, font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: "Reviewed By", bold: true, font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER, spacing: { after: 600 } }),
         new Paragraph({ children: [new TextRun({ text: "Ms. Diksha Dwivedi", font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER }),
         new Paragraph({ children: [new TextRun({ text: "Analyst", font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER })
       ], borders: BORDERS_NONE, width: { size: Math.round(PAGE_WIDTH_DXA / (hasChem && hasMicro ? 3 : 2)), type: WidthType.DXA } }));
 
       if (hasChem) {
         sigCells.push(new TableCell({ children: [
-          new Paragraph({ children: [new TextRun({ text: "Authorized Signatory", bold: true, font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+          new Paragraph({ children: [new TextRun({ text: "Authorized Signatory", bold: true, font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER, spacing: { after: 600 } }),
           new Paragraph({ children: [new TextRun({ text: job.distribution?.chemical?.assignedHead?.name || 'Ms. Monika Pali', font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER }),
           new Paragraph({ children: [new TextRun({ text: "Technical Manager", font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER })
         ], borders: BORDERS_NONE, width: { size: Math.round(PAGE_WIDTH_DXA / (hasChem && hasMicro ? 3 : 2)), type: WidthType.DXA } }));
@@ -448,13 +448,13 @@ const generateReport = async (job, reportType) => {
 
       if (hasMicro) {
         sigCells.push(new TableCell({ children: [
-          new Paragraph({ children: [new TextRun({ text: "Authorized Signatory", bold: true, font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+          new Paragraph({ children: [new TextRun({ text: "Authorized Signatory", bold: true, font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER, spacing: { after: 600 } }),
           new Paragraph({ children: [new TextRun({ text: job.distribution?.micro?.assignedHead?.name || 'Ms. Jyoti Pathak', font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER }),
           new Paragraph({ children: [new TextRun({ text: "Microbiology Head", font: "Times New Roman", size: 20 })], alignment: AlignmentType.CENTER })
         ], borders: BORDERS_NONE, width: { size: Math.round(PAGE_WIDTH_DXA / (hasChem && hasMicro ? 3 : 2)), type: WidthType.DXA } }));
       }
 
-      children.push(new Table({ rows: [new TableRow({ children: sigCells })], width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA } }));
+      children.push(new Table({ rows: [new TableRow({ children: sigCells })], width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA }, borders: TABLE_BORDERS_NONE }));
 
       children.push(new Paragraph({
         children: [new TextRun({ text: "*End of report*", bold: true, font: "Times New Roman", size: 22 })],
