@@ -512,7 +512,7 @@ const generateReport = async (job, reportType) => {
 
       children.push(new Paragraph({
         children: [new TextRun({ text: "*End of report*", bold: true, font: "Times New Roman", size: 22 })],
-        alignment: AlignmentType.CENTER, spacing: { before: 100, after: 100 }
+        alignment: AlignmentType.CENTER, spacing: { before: 40, after: 0 }
       }));
     }
 
