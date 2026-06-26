@@ -57,7 +57,7 @@ const TEST_RESULT_TITLE = Math.ceil(400 * SAFETY_FACTOR);
 const RESULTS_HEADER_ROW = Math.ceil(320 * SAFETY_FACTOR);
 
 // Footer block (abbreviations + notes + signing spacer + signatures + end of report)
-const FOOTER_BLOCK_HEIGHT = Math.ceil(3200 * SAFETY_FACTOR);
+const FOOTER_BLOCK_HEIGHT = Math.ceil(2600 * SAFETY_FACTOR);
 
 // Height of a discipline header row (for injection on continuation pages)
 const DISCIPLINE_HEADER_HEIGHT = Math.ceil((2 * LINE_HEIGHT + ROW_PADDING) * SAFETY_FACTOR);
