@@ -507,7 +507,7 @@ const generateReport = async (job, reportType) => {
       }
 
       // Spacer for physical signing space
-      children.push(new Paragraph({ children: [], spacing: { before: 500 } }));
+      children.push(new Paragraph({ children: [], spacing: { before: 300 } }));
       children.push(new Table({ rows: [new TableRow({ children: sigCells })], width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA }, borders: TABLE_BORDERS_NONE }));
 
       children.push(new Paragraph({
