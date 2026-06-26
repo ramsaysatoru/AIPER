@@ -13,8 +13,9 @@ const MARGIN_BOTTOM = 720;
 const FOOTER_RESERVE = 400; // space for page number footer
 const USABLE_HEIGHT = PAGE_HEIGHT_DXA - MARGIN_TOP - MARGIN_BOTTOM - FOOTER_RESERVE;
 
-// Safety multiplier: Word Online renders ~10% larger than PDF engine
-const SAFETY_FACTOR = 1.10;
+// Safety multiplier: keep at 1.0 (no inflation) since PDF renders correctly;
+// Word Online/docx-preview differences are cosmetic only
+const SAFETY_FACTOR = 1.0;
 
 // Approximate character width in twips for Times New Roman at size 20 (10pt)
 const AVG_CHAR_WIDTH = 100;
@@ -514,7 +515,7 @@ const generateReport = async (job, reportType) => {
       }
 
       // Spacer for physical signing space
-      children.push(new Paragraph({ children: [], spacing: { before: 500 } }));
+      children.push(new Paragraph({ children: [], spacing: { before: 700 } }));
       children.push(new Table({ rows: [new TableRow({ children: sigCells })], width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA }, borders: TABLE_BORDERS_NONE }));
 
       children.push(new Paragraph({
@@ -523,7 +524,9 @@ const generateReport = async (job, reportType) => {
       }));
     }
 
-    if (!isLast) children.push(new Paragraph({ children: [new PageBreak()] }));
+    // No explicit PageBreak needed — each page is its own section, which
+    // automatically starts on a new page. Adding PageBreak here would
+    // create a blank page between sections.
 
     sections.push({
       properties: { page: { margin: { top: 720, right: 720, bottom: 720, left: 720 }, size: { width: 12240, height: 15840 } } },
