@@ -710,17 +710,57 @@ const CascadingParameterSelector = ({
           )}
 
           {selectedParams.length > 0 && (
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)' }}>
-              <input 
-                type="checkbox" 
-                id={`show-specs-${label}`}
-                checked={showSpecifications} 
-                onChange={(e) => setShowSpecifications(e.target.checked)}
-                style={{ marginTop: '0.2rem', transform: 'scale(1.2)' }}
-              />
-              <label htmlFor={`show-specs-${label}`} style={{ fontSize: '0.9rem', cursor: 'pointer', lineHeight: '1.4' }}>
-                Include specifications in the report
-              </label>
+            <div
+              onClick={() => setShowSpecifications(!showSpecifications)}
+              style={{
+                marginTop: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: showSpecifications ? 'rgba(var(--color-primary-rgb, 59, 130, 246), 0.08)' : 'var(--color-surface-hover)',
+                borderRadius: 'var(--radius-md)',
+                border: showSpecifications ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                userSelect: 'none',
+              }}
+            >
+              {/* Toggle switch */}
+              <div style={{
+                width: '38px',
+                height: '22px',
+                borderRadius: '11px',
+                backgroundColor: showSpecifications ? 'var(--color-primary)' : 'var(--color-border)',
+                position: 'relative',
+                transition: 'background-color 0.2s ease',
+                flexShrink: 0,
+              }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: '#fff',
+                  position: 'absolute',
+                  top: '3px',
+                  left: showSpecifications ? '19px' : '3px',
+                  transition: 'left 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                <span style={{
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: showSpecifications ? 'var(--color-primary)' : 'var(--color-text-main)',
+                  transition: 'color 0.2s ease',
+                }}>
+                  Include specifications in the report
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  {showSpecifications ? 'Specification column will appear in the report' : 'No specification column in the report'}
+                </span>
+              </div>
             </div>
           )}
           
