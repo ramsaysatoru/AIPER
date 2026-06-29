@@ -2396,7 +2396,7 @@ function ReviewQueue() {
   };
 
   const handleReassign = async (id) => {
-    const inst = jobs.find((j) => j._id === id);
+    const inst = instances.find((j) => j._id === id);
     if (!inst) return;
 
     const selected = [];
